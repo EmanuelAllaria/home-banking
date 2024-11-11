@@ -1,0 +1,36 @@
+package dao;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConnection {
+
+    private static DatabaseConnection instance;
+    private Connection connection;
+    private static final String URL = "jdbc:h2:C:\\Users\\VulturDev\\Downloads\\fasgoma-prueba-home-c5beddb9ef72\\BASEdeDATOSYAC.mv.dbBASEdeDATOSYAC";
+
+    private DatabaseConnection() {
+        try {
+            this.connection = DriverManager.getConnection(URL, "sa", "");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error al establecer la conexión a la base de datos.", e);
+        }
+    }
+
+    public static DatabaseConnection getInstance() {
+        if (instance == null) {
+            synchronized (DatabaseConnection.class) {
+                if (instance == null) {
+                    instance = new DatabaseConnection();
+                }
+            }
+        }
+        return instance;
+    }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+}
