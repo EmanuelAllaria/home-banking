@@ -1,24 +1,56 @@
 package dao;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Date;
+import java.util.*;
 
-import clases.Tarjeta;
-import clases.TarjetaCredito;
-import clases.TarjetaDebito;
-import clases.TarjetaPrepaga;
+import clases.*;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TarjetaDAO {
-    private Connection connection;
+    private static Connection connection;
 
     public TarjetaDAO() {
         // Obtiene la conexión única desde DatabaseConnection (Singleton)
         this.connection = DatabaseConnection.getInstance().getConnection();
+    }
+
+    public void actualizarSaldo(int tarjetaId, double nuevoSaldo) throws SQLException {
+        Tarjeta tarjeta = obtenerTarjetaPorId(tarjetaId);
+        Usuario usuario = UsuarioDAO.obtenerUsuarioPorId(tarjeta.getUsuarioId());
+
+        String sql = "UPDATE Tarjetas SET Saldo = ? WHERE ID = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setDouble(1, nuevoSaldo);
+            pstmt.setInt(2, tarjetaId);
+            pstmt.executeUpdate();
+
+            UsuarioDAO.logAudit(usuario.getId(), "RESUMEN", "Resumen creado por: " + usuario.getNombre() + ", con ID : " + usuario.getId());
+        }
+    }
+
+    public static Tarjeta obtenerTarjetaPorId(Integer tarjetaID) throws SQLException {
+        String sql = "SELECT * FROM Tarjetas WHERE ID = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, tarjetaID);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Tarjeta tarjeta = new Tarjeta();
+                tarjeta.setId(rs.getInt("ID"));
+                tarjeta.setUsuarioId(rs.getInt("UsuarioID"));
+                tarjeta.setNumero(rs.getString("Numero"));
+                tarjeta.setLimite(rs.getDouble("Limite"));
+                tarjeta.setSaldo(rs.getDouble("Saldo"));
+                if (tarjeta instanceof TarjetaCredito) {
+                    ((TarjetaCredito) tarjeta).setTasaInteres(((TarjetaCredito) tarjeta).getTasaInteres());
+                }
+                return tarjeta;
+            }
+        }
+        return null;
     }
 
     public void crearTarjeta(Tarjeta tarjeta) throws SQLException {
@@ -40,6 +72,8 @@ public class TarjetaDAO {
             if (generatedKeys.next()) {
                 tarjeta.setId(generatedKeys.getInt(1));
             }
+
+            UsuarioDAO.logAudit(tarjeta.getUsuarioId(), "TARJETA DE " + tarjeta.getClass().getSimpleName().toUpperCase() + " CREADA", "Tarjeta de " + tarjeta.getClass().getSimpleName() + " creada con el balance: $" + tarjeta.getSaldo() + ", con el limite de: $" + tarjeta.getLimite());
         }
     }
 
@@ -57,14 +91,21 @@ public class TarjetaDAO {
             }
             pstmt.setInt(6, tarjeta.getId());
             pstmt.executeUpdate();
+
+            UsuarioDAO.logAudit(tarjeta.getUsuarioId(), "TARJETA DE " + tarjeta.getClass().getSimpleName().toUpperCase() + " ACTUALIZADA", "Tarjeta de " + tarjeta.getClass().getSimpleName() + " actualizada con el nuevo balance: $" + tarjeta.getSaldo() + ", con el nuevo limite de: $" + tarjeta.getLimite());
         }
     }
 
     public void eliminarTarjeta(int id) throws SQLException {
+        Tarjeta tarjeta = obtenerTarjetaPorId(id);
+        Usuario usuario = UsuarioDAO.obtenerUsuarioPorId(tarjeta.getUsuarioId());
+
         String sql = "DELETE FROM Tarjetas WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
+
+            UsuarioDAO.logAudit(usuario.getId(), "TARJETA ELIMINADA", "Tarjeta eliminada.");
         }
     }
 
@@ -109,6 +150,47 @@ public class TarjetaDAO {
             }
         }
         return tarjetas;
+    }
+
+    public void registrarMovimiento(int tarjetaId, double monto) throws SQLException {
+        Tarjeta tarjeta = obtenerTarjetaPorId(tarjetaId);
+        Usuario usuario = UsuarioDAO.obtenerUsuarioPorId(tarjeta.getUsuarioId());
+
+        String sql = "INSERT INTO MovimientosTarjeta (TarjetaID, Monto, Fecha) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, tarjetaId);
+            pstmt.setDouble(2, monto);
+            pstmt.setDate(3, new Date(System.currentTimeMillis()));
+            pstmt.executeUpdate();
+
+            UsuarioDAO.logAudit(usuario.getId(), "MOVIMIENTO DE TARJETA REGISTRADA", "Movimiento de $" + monto + ", con la tarjeta con ID: " + tarjetaId);
+        }
+    }
+
+    public List<MovimientoTarjeta> obtenerMovimientosPorMes(int tarjetaId, int mes, int anio) throws SQLException {
+        Tarjeta tarjeta = obtenerTarjetaPorId(tarjetaId);
+        Usuario usuario = UsuarioDAO.obtenerUsuarioPorId(tarjeta.getUsuarioId());
+
+        List<MovimientoTarjeta> movimientos = new ArrayList<>();
+        String sql = "SELECT * FROM MovimientosTarjeta WHERE TarjetaID = ? AND MONTH(Fecha) = ? AND YEAR(Fecha) = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, tarjetaId);
+            pstmt.setInt(2, mes);
+            pstmt.setInt(3, anio);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                MovimientoTarjeta movimiento = new MovimientoTarjeta(
+                        rs.getInt("ID"),
+                        rs.getInt("TarjetaID"),
+                        rs.getDouble("Monto"),
+                        rs.getDate("Fecha")
+                );
+                movimientos.add(movimiento);
+            }
+        }
+
+        UsuarioDAO.logAudit(usuario.getId(), "MOVIMIENTO DE TARJETA OBTENIDA", "Movimiento de la tarjeta con el ID: " + tarjetaId + " obtenida, para el mes " + mes + " de " + anio);
+        return movimientos;
     }
 }
 

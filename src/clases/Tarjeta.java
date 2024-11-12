@@ -1,8 +1,6 @@
 package clases;
 
-
-
-public abstract class Tarjeta {
+public class Tarjeta {
     private int id;
     private int usuarioId;
     private String numero;

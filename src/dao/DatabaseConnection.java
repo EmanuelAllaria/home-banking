@@ -7,7 +7,7 @@ public class DatabaseConnection {
 
     private static DatabaseConnection instance;
     private Connection connection;
-    private static final String URL = "jdbc:h2:C:\\Users\\VulturDev\\Downloads\\fasgoma-prueba-home-c5beddb9ef72\\BASEdeDATOSYAC.mv.dbBASEdeDATOSYAC";
+    private static final String URL = "jdbc:h2:C:\\Users\\VulturDev\\Desktop\\trabajo\\HOMEBANK YAC\\BASEdeDATOSYAC";
 
     private DatabaseConnection() {
         try {

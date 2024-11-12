@@ -7,14 +7,16 @@ public class Cuenta {
     private int usuarioId;
     private String tipo;
     private double saldo;
+    private double tasaInteres;
 
     public Cuenta() {}
 
-    public Cuenta(int id, int usuarioId, String tipo, double saldo) {
+    public Cuenta(int id, int usuarioId, String tipo, double saldo, double tasaInteres) {
         this.id = id;
         this.usuarioId = usuarioId;
         this.tipo = tipo;
         this.saldo = saldo;
+        this.tasaInteres = tasaInteres;
     }
 
     @Override
@@ -30,4 +32,6 @@ public class Cuenta {
     public void setTipo(String tipo) { this.tipo = tipo; }
     public double getSaldo() { return saldo; }
     public void setSaldo(double saldo) { this.saldo = saldo; }
+    public double getTasaInteres() { return tasaInteres; }
+    public void setTasaInteres(double tasaInteres) { this.tasaInteres = tasaInteres; }
 }

@@ -33,7 +33,7 @@ public class CuentaGUI {
         accountDetailsTextArea.setEditable(false);
 
         JScrollPane scrollPane = new JScrollPane(accountDetailsTextArea);
-        scrollPane.setBounds(10, 160, 300, 200);
+        scrollPane.setBounds(10, 200, 300, 200);
         panel.add(scrollPane);
 
         JButton listAccountsButton = new JButton("Listar Cuentas");
@@ -70,6 +70,37 @@ public class CuentaGUI {
             public void actionPerformed(ActionEvent e) {
                 cuentaService.deleteAccount();  // Eliminar cuenta
                 updateAccountList();  // Actualizar la lista de cuentas
+            }
+        });
+
+        JButton generarReporteButton = new JButton("Generar Reporte Movimientos");
+        generarReporteButton.setBounds(10, 140, 200, 25);
+        panel.add(generarReporteButton);
+
+        generarReporteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    int cuentaId = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la cuenta"));
+                    int mes = Integer.parseInt(JOptionPane.showInputDialog("Ingrese mes (1-12)"));
+                    int anio = Integer.parseInt(JOptionPane.showInputDialog("Ingrese año"));
+
+                    cuentaService.generarReporteMovimientos(cuentaId, mes, anio);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        JButton generarInteresesButton = new JButton("Generar Intereses");
+        generarInteresesButton.setBounds(10, 170, 160, 25);
+        panel.add(generarInteresesButton);
+
+        generarInteresesButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cuentaService.generarIntereses();  // Generar intereses
+                updateAccountList();
             }
         });
 

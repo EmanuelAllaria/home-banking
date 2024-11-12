@@ -55,17 +55,15 @@ public class ResumenGUI {
         updateResumenList();
     }
 
-    // Método para actualizar la lista completa de resúmenes en el JTextArea
     private static void updateResumenList() {
         StringBuilder sb = new StringBuilder();
-        resumenService.listResumenes(sb);  // Obtener los resúmenes y llenar el StringBuilder
-        resumenDetailsTextArea.setText(sb.toString());  // Actualizar el JTextArea con la lista de resúmenes
+        resumenService.listResumenes(sb);
+        resumenDetailsTextArea.setText(sb.toString());
     }
 
-    // Método para mostrar el resumen de una cuenta específica
     private static void updateResumenByCuenta(int cuentaId) {
         StringBuilder sb = new StringBuilder();
-        resumenService.getResumenByCuenta(cuentaId, sb);  // Obtener resumen específico y llenar el StringBuilder
-        resumenDetailsTextArea.setText(sb.toString());  // Actualizar el JTextArea con el resumen de la cuenta específica
+        resumenService.getResumenByCuenta(cuentaId, sb);
+        resumenDetailsTextArea.setText(sb.toString());
     }
 }

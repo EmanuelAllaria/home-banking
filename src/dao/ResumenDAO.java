@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import clases.Resumen;
+import clases.Usuario;
 
 public class ResumenDAO {
     private Connection connection;
@@ -13,6 +14,8 @@ public class ResumenDAO {
     }
 
     public List<Resumen> obtenerResumenPorCuentaId(int cuentaId) throws SQLException {
+        Usuario usuario = UsuarioDAO.obtenerUsuarioPorCuentaId(cuentaId);
+
         List<Resumen> resumenes = new ArrayList<>();
         String sql = """
             SELECT 
@@ -47,6 +50,8 @@ public class ResumenDAO {
                 resumenes.add(resumen);
             }
         }
+
+        UsuarioDAO.logAudit(usuario.getId(), "OBTENER RESUMEN CUENTA", "Resumen obtenido por: " + usuario.getNombre() + ", con ID : " + usuario.getId());
         return resumenes;
     }
 

@@ -1,12 +1,15 @@
 package service;
 
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
 import javax.swing.JOptionPane;
 
+import clases.MovimientoCuenta;
 import clases.Cuenta;
 import clases.Usuario;
 import dao.CuentaDAO;
@@ -39,6 +42,7 @@ public class CuentaService {
             cuenta.setUsuarioId(usuarioId);
             cuenta.setTipo(tipo);
             cuenta.setSaldo(saldo);
+            cuenta.setTasaInteres(20.0);
 
             // Usa la instancia existente de cuentaDAO
             cuentaDAO.crearCuenta(cuenta);
@@ -58,11 +62,20 @@ public class CuentaService {
 
             for (Cuenta cuenta : cuentas) {
                 Usuario usuario = usuarioDAO.obtenerUsuarioPorId(cuenta.getUsuarioId());
+
                 sb.append("Cuenta ID: ").append(cuenta.getId())
                         .append(", Tipo: ").append(cuenta.getTipo())
                         .append(", Saldo: ").append(cuenta.getSaldo())
-                        .append(", Usuario: ").append(usuario.getNombre())
-                        .append("\n");
+                        .append(", Tasa de Interes: ").append(cuenta.getTasaInteres())
+                        .append(", Usuario: ");
+
+                if (usuario != null) {
+                    sb.append(usuario.getNombre());
+                } else {
+                    sb.append("Usuario no encontrado");
+                }
+
+                sb.append("\n");
             }
 
         } catch (SQLException e) {
@@ -80,8 +93,6 @@ public class CuentaService {
             cuenta.setId(id);
             cuenta.setTipo(tipo);
             cuenta.setSaldo(saldo);
-
-            // Usa la instancia existente de cuentaDAO
             cuentaDAO.actualizarCuenta(cuenta);
 
             JOptionPane.showMessageDialog(null, "Cuenta actualizada con éxito!");
@@ -108,5 +119,46 @@ public class CuentaService {
     public List<String> listarCuentasPorUsuarioId1(int usuarioId) {
         // TODO: Implementa este método si es necesario
         return null;
+    }
+
+    public void generarIntereses() {
+        try {
+            List<Cuenta> cuentas = cuentaDAO.listarCuentas();
+            for (Cuenta cuenta : cuentas) {
+                double interes = cuenta.getSaldo() * (cuenta.getTasaInteres() / 100);
+                cuenta.setSaldo(cuenta.getSaldo() + interes);
+                cuentaDAO.actualizarCuenta(cuenta);
+                cuentaDAO.registrarMovimiento(cuenta.getId(), cuenta.getUsuarioId(), interes, "Cuenta");
+            }
+            JOptionPane.showMessageDialog(null, "Intereses aplicados a todas las cuentas.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void generarReporteMovimientos(int cuentaId, int mes, int anio) {
+        try {
+            List<MovimientoCuenta> movimientos = cuentaDAO.obtenerMovimientosPorMes(cuentaId, mes, anio);
+
+            String fileName = "Reporte_Movimientos_Cuenta_" + cuentaId + "_" + mes + "_" + anio + ".txt";
+            try (FileWriter writer = new FileWriter(fileName)) {
+                writer.write("Reporte de Movimientos de la Cuenta ID: " + cuentaId + "\n");
+                writer.write("Mes: " + mes + ", Año: " + anio + "\n");
+                writer.write("===========================================\n");
+
+                for (MovimientoCuenta movimiento : movimientos) {
+                    writer.write("Fecha: " + movimiento.getFecha() + ", Monto: " + movimiento.getMonto() +  ", Tipo: " + movimiento.getTipo() +  ", Detalle: " + movimiento.getDetalle() + "\n");
+                }
+
+                writer.write("===========================================\n");
+                JOptionPane.showMessageDialog(null, "Reporte generado: " + fileName);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

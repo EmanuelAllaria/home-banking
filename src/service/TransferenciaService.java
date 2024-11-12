@@ -30,6 +30,7 @@ public class TransferenciaService {
 
             TransferenciaDAO transferenciaDAO = new TransferenciaDAO();
             transferenciaDAO.registrarTransferencia(transferencia);
+            cuentaDAO.registrarMovimiento(cuentaOrigen.getId(), cuentaDestino.getUsuarioId(), transferencia.getMonto(), "Transferencia");
 
             return "Transferencia realizada con éxito!\n\n" +
                     "Cuenta Origen (antes): " + saldoOrigenAntes + " - (después): " + cuentaOrigen.getSaldo() + "\n" +

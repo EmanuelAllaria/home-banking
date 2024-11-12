@@ -64,6 +64,28 @@ public class TarjetaGUI {
                 tarjetaService.listCards();
             }
         });
+
+        JButton registrarDebitoButton = new JButton("Registrar Débito");
+        registrarDebitoButton.setBounds(10, 140, 160, 25);
+        panel.add(registrarDebitoButton);
+
+        registrarDebitoButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tarjetaService.registrarDebito();
+            }
+        });
+
+        JButton emitirResumenButton = new JButton("Emitir Resumen");
+        emitirResumenButton.setBounds(10, 170, 160, 25);
+        panel.add(emitirResumenButton);
+
+        emitirResumenButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tarjetaService.emitirResumenMensual();
+            }
+        });
     }
 }
 
