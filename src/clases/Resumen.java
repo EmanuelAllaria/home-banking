@@ -2,29 +2,29 @@ package clases;
 
 public class Resumen {
     private int id;
-    private int cuentaId;
-    private double ingresos;
-    private double egresos;
-    private double saldoFinal;
+    private int usuarioId;
+    private double monto;
+    private int idOrigen;
+    private int idDestino;
 
     public Resumen() {}
 
-    public Resumen(int id, int cuentaId, double ingresos, double egresos, double saldoFinal) {
+    public Resumen(int id, int usuarioId, double monto, int idOrigen, int idDestino) {
         this.id = id;
-        this.cuentaId = cuentaId;
-        this.ingresos = ingresos;
-        this.egresos = egresos;
-        this.saldoFinal = saldoFinal;
+        this.usuarioId = usuarioId;
+        this.monto = monto;
+        this.idOrigen = idOrigen;
+        this.idDestino = idDestino;
     }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    public int getCuentaId() { return cuentaId; }
-    public void setCuentaId(int cuentaId) { this.cuentaId = cuentaId; }
-    public double getIngresos() { return ingresos; }
-    public void setIngresos(double ingresos) { this.ingresos = ingresos; }
-    public double getEgresos() { return egresos; }
-    public void setEgresos(double egresos) { this.egresos = egresos; }
-    public double getSaldoFinal() { return saldoFinal; }
-    public void setSaldoFinal(double saldoFinal) { this.saldoFinal = saldoFinal; }
+    public int getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(int usuarioId) { this.usuarioId = usuarioId; }
+    public double getMonto() { return monto; }
+    public void setMonto(double monto) { this.monto = monto; }
+    public int getIdOrigen() { return idOrigen; }
+    public void setIdOrigen(int idOrigen) { this.idOrigen = idOrigen; }
+    public int getIdDestino() { return idDestino; }
+    public void setIdDestino(int idDestino) { this.idDestino = idDestino; }
 }

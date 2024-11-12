@@ -1,4 +1,5 @@
 package dao;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -30,7 +31,9 @@ public class DatabaseConnection {
     }
 
     public Connection getConnection() {
+        if (this.connection == null) {
+            throw new IllegalStateException("La conexión a la base de datos no está inicializada.");
+        }
         return connection;
     }
-
 }

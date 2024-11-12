@@ -1,19 +1,21 @@
 package dao;
 
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import clases.Usuario;
+import javax.swing.*;
 
 public class UsuarioDAO {
     private static Connection connection;
 
-    // Constructor predeterminado
     public UsuarioDAO() {
         // Obtiene la conexión única desde DatabaseConnection (Singleton)
         this.connection = DatabaseConnection.getInstance().getConnection();
+        if (this.connection == null) {
+            throw new IllegalStateException("Database connection is not initialized.");
+        }
     }
 
     public void crearUsuario(Usuario usuario) throws SQLException {
@@ -109,6 +111,8 @@ public class UsuarioDAO {
             pstmt.setString(2, action);
             pstmt.setString(3, details);
             pstmt.executeUpdate();
+
+            JOptionPane.showMessageDialog(null, details, action, JOptionPane.INFORMATION_MESSAGE);
         }
     }
 }

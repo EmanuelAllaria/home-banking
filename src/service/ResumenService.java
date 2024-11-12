@@ -19,10 +19,9 @@ public class ResumenService {
         try {
             List<Resumen> resumenes = resumenDAO.listarResumenes();
             for (Resumen resumen : resumenes) {
-                sb.append("Cuenta ID: ").append(resumen.getCuentaId())
-                        .append(", Ingresos: ").append(resumen.getIngresos())
-                        .append(", Egresos: ").append(resumen.getEgresos())
-                        .append(", Saldo Final: ").append(resumen.getSaldoFinal())
+                sb.append("Transferencia a cuenta ID: ").append(resumen.getIdDestino())
+                        .append(", por: $").append(resumen.getMonto())
+                        .append(", de la cuenta ID: ").append(resumen.getIdOrigen())
                         .append("\n");
             }
         } catch (SQLException e) {
@@ -37,32 +36,11 @@ public class ResumenService {
                 sb.append("No hay resúmenes disponibles para la cuenta ID: ").append(cuentaId);
             } else {
                 for (Resumen resumen : resumenes) {
-                    sb.append(", Ingresos: ").append(resumen.getIngresos())
-                            .append(", Egresos: ").append(resumen.getEgresos())
-                            .append(", Saldo Final: ").append(resumen.getSaldoFinal())
+                    sb.append("Transferencia a cuenta ID: ").append(resumen.getIdDestino())
+                            .append(", por: $").append(resumen.getMonto())
+                            .append(", de la cuenta ID: ").append(resumen.getIdOrigen())
                             .append("\n");
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void generateResumen() {
-        try {
-            int cuentaId = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la cuenta para generar el resumen"));
-            List<Resumen> resumenes = resumenDAO.obtenerResumenPorCuentaId(cuentaId);
-            StringBuilder sb = new StringBuilder();
-            if (resumenes.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No hay resúmenes disponibles para la cuenta ID: " + cuentaId);
-            } else {
-                for (Resumen resumen : resumenes) {
-                    sb.append(", Ingresos: ").append(resumen.getIngresos())
-                            .append(", Egresos: ").append(resumen.getEgresos())
-                            .append(", Saldo Final: ").append(resumen.getSaldoFinal())
-                            .append("\n");
-                }
-                JOptionPane.showMessageDialog(null, sb.toString());
             }
         } catch (SQLException e) {
             e.printStackTrace();
