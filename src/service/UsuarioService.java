@@ -49,8 +49,6 @@ public class UsuarioService {
                 sb.append(usuarioInfo).append("\n");
             }
 
-            JOptionPane.showMessageDialog(null, sb.toString());
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
