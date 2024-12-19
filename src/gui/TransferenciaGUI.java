@@ -1,32 +1,18 @@
 package gui;
 
-
 import javax.swing.*;
 
-import clases.Cuenta;
-import clases.Transferencia;
-import service.CuentaService;
-import service.TransferenciaService;
-import service.UsuarioService;
+import clases.*;
+import service.*;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.sql.SQLException;
-import java.util.List;
-
-import javax.swing.*;
-import service.CuentaService;
-import service.TransferenciaService;
-import service.UsuarioService;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.sql.SQLException;
 import java.util.List;
 
 public class TransferenciaGUI {
     private static TransferenciaService transferenciaService = new TransferenciaService();
     private static CuentaService cuentaService = new CuentaService();
+    private static JTextArea transferDetailsArea;
 
     public static void placeTransferenciasComponents(JInternalFrame frame) {
         JPanel panel = new JPanel();
@@ -75,10 +61,11 @@ public class TransferenciaGUI {
         amountField.setBounds(120, 110, 160, 25);
         panel.add(amountField);
 
-        JTextArea transferDetailsArea = new JTextArea();
-        transferDetailsArea.setBounds(10, 140, 270, 100);
+        transferDetailsArea = new JTextArea();
         transferDetailsArea.setEditable(false);
-        panel.add(transferDetailsArea);
+        JScrollPane scrollPane = new JScrollPane(transferDetailsArea);
+        scrollPane.setBounds(10, 140, 270, 100);
+        panel.add(scrollPane);
 
         JButton transferButton = new JButton("Transferir");
         transferButton.setBounds(10, 250, 160, 25);
@@ -153,5 +140,3 @@ public class TransferenciaGUI {
         });
     }
 }
-
-
