@@ -17,6 +17,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import java.sql.Connection;
 import java.util.Map;
+import java.util.Objects;
 
 public class TarjetaService {
     private Connection connection;
@@ -38,7 +39,7 @@ public class TarjetaService {
             switch (tipoTarjeta) {
                 case "Credito":
                     double tasaInteres = Double.parseDouble(JOptionPane.showInputDialog("Ingrese tasa de interés"));
-                    tarjeta = new TarjetaCredito(0, usuarioId, numero, limite, saldo, tasaInteres);
+                    tarjeta = new TarjetaCredito(0, usuarioId, numero, limite, saldo, 0.0, tasaInteres);
                     break;
                 case "Debito":
                     tarjeta = new TarjetaDebito(0, usuarioId, numero, limite, saldo);
@@ -72,7 +73,8 @@ public class TarjetaService {
             switch (tipoTarjeta) {
                 case "Credito":
                     double tasaInteres = Double.parseDouble(JOptionPane.showInputDialog("Ingrese tasa de interés"));
-                    tarjeta = new TarjetaCredito(id, 0, numero, limite, saldo, tasaInteres);
+                    double saldoAPagar = Double.parseDouble(JOptionPane.showInputDialog("Ingrese nuevo saldo a pagar"));
+                    tarjeta = new TarjetaCredito(id, 0, numero, limite, saldo, saldoAPagar, tasaInteres);
                     break;
                 case "Debito":
                     tarjeta = new TarjetaDebito(id, 0, numero, limite, saldo);
@@ -126,7 +128,7 @@ public class TarjetaService {
                         .append("\n");
             }
 
-            JOptionPane.showMessageDialog(null, sb.toString());
+            JOptionPane.showMessageDialog(null, sb.toString(),"Lista de tarjetas", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -145,9 +147,12 @@ public class TarjetaService {
                 double saldoActual = tarjeta.getSaldo();
                 double nuevoSaldo = saldoActual - monto;
                 tarjetaDAO.actualizarSaldo(tarjetaId, nuevoSaldo);
+                if (Objects.equals(tarjeta.getTipo(), "TarjetaCredito")) {
+                    tarjetaDAO.actualizarSaldoAPagar(tarjetaId, monto);
+                }
                 tarjetaDAO.registrarMovimiento(tarjetaId, monto);
                 registrarMovimiento(tarjetaId, monto);
-                JOptionPane.showMessageDialog(null, "Débito registrado con éxito");
+                JOptionPane.showMessageDialog(null, "Débito registrado con éxito","Debitos", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(null, "Tarjeta no encontrada");
             }

@@ -6,15 +6,21 @@ public class Tarjeta {
     private String numero;
     private double limite;
     private double saldo;
+    private String tipo;
 
     public Tarjeta() {}
 
-    public Tarjeta(int id, int usuarioId, String numero, double limite, double saldo) {
+    public Tarjeta(int id, int usuarioId, String numero, double limite, double saldo, String tipo) {
         this.id = id;
         this.usuarioId = usuarioId;
         this.numero = numero;
         this.limite = limite;
         this.saldo = saldo;
+        this.tipo = tipo;
+    }
+
+    public Tarjeta(int id, int usuarioId, String numero, double limite, double saldo) {
+        this(id, usuarioId, numero, limite, saldo, null);
     }
 
     public int getId() { return id; }
@@ -27,4 +33,6 @@ public class Tarjeta {
     public void setLimite(double limite) { this.limite = limite; }
     public double getSaldo() { return saldo; }
     public void setSaldo(double saldo) { this.saldo = saldo; }
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
 }

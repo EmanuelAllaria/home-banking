@@ -28,7 +28,34 @@ public class TarjetaDAO {
             pstmt.setInt(2, tarjetaId);
             pstmt.executeUpdate();
 
-            UsuarioDAO.logAudit(usuario.getId(), "RESUMEN", "Resumen creado por: " + usuario.getNombre() + ", con ID : " + usuario.getId());
+            UsuarioDAO.logAudit(usuario.getId(), "SALDO ACTUALIZADO", "Saldo actualizado por: " + usuario.getNombre() + ", con ID : " + usuario.getId() + ", monto de $" + nuevoSaldo);
+        } catch (SQLException e) {
+            throw new SQLException("Error al actualizar el saldo: " + e.getMessage(), e);
+        }
+    }
+
+    public void actualizarSaldoAPagar(int tarjetaId, double saldo) throws SQLException {
+        Tarjeta tarjeta = obtenerTarjetaPorId(tarjetaId);
+        Usuario usuario = UsuarioDAO.obtenerUsuarioPorId(tarjeta.getUsuarioId());
+
+        assert tarjeta instanceof TarjetaCredito;
+        double saldoAPagarAnterior = ((TarjetaCredito) tarjeta).getSaldoAPagar();
+        double tasaInteres = ((TarjetaCredito) tarjeta).getTasaInteres();
+        double saldoAPagar = saldoAPagarAnterior + (saldo + ((saldo * tasaInteres) / 100));
+
+        String sql = "UPDATE Tarjetas SET SaldoAPagar = ? WHERE ID = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setDouble(1, saldoAPagar);
+            stmt.setInt(2, tarjetaId);
+            int filasActualizadas = stmt.executeUpdate();
+
+            if (filasActualizadas == 0) {
+                throw new SQLException("No se pudo actualizar el SaldoAPagar para la tarjeta con ID: " + tarjetaId);
+            }
+
+            UsuarioDAO.logAudit(usuario.getId(), "SALDO A PAGAR ACTUALIZADO", "Saldo a pagar actualizado por: " + usuario.getNombre() + ", con ID : " + usuario.getId() + ", monto de $" + saldoAPagar);
+        } catch (SQLException e) {
+            throw new SQLException("Error al actualizar el saldo: " + e.getMessage(), e);
         }
     }
 
@@ -36,25 +63,38 @@ public class TarjetaDAO {
         String sql = "SELECT * FROM Tarjetas WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, tarjetaID);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                Tarjeta tarjeta = new Tarjeta();
-                tarjeta.setId(rs.getInt("ID"));
-                tarjeta.setUsuarioId(rs.getInt("UsuarioID"));
-                tarjeta.setNumero(rs.getString("Numero"));
-                tarjeta.setLimite(rs.getDouble("Limite"));
-                tarjeta.setSaldo(rs.getDouble("Saldo"));
-                if (tarjeta instanceof TarjetaCredito) {
-                    ((TarjetaCredito) tarjeta).setTasaInteres(((TarjetaCredito) tarjeta).getTasaInteres());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String tipo = rs.getString("Tipo");
+                    if ("TarjetaCredito".equals(tipo)) {
+                        TarjetaCredito tarjetaCredito = new TarjetaCredito();
+                        tarjetaCredito.setId(rs.getInt("ID"));
+                        tarjetaCredito.setUsuarioId(rs.getInt("UsuarioID"));
+                        tarjetaCredito.setNumero(rs.getString("Numero"));
+                        tarjetaCredito.setLimite(rs.getDouble("Limite"));
+                        tarjetaCredito.setSaldo(rs.getDouble("Saldo"));
+                        tarjetaCredito.setSaldoAPagar(rs.getDouble("SaldoAPagar"));
+                        tarjetaCredito.setTipo(tipo);
+                        tarjetaCredito.setTasaInteres(rs.getDouble("TasaInteres"));
+                        return tarjetaCredito;
+                    } else {
+                        Tarjeta tarjeta = new Tarjeta();
+                        tarjeta.setId(rs.getInt("ID"));
+                        tarjeta.setUsuarioId(rs.getInt("UsuarioID"));
+                        tarjeta.setNumero(rs.getString("Numero"));
+                        tarjeta.setLimite(rs.getDouble("Limite"));
+                        tarjeta.setSaldo(rs.getDouble("Saldo"));
+                        tarjeta.setTipo(tipo);
+                        return tarjeta;
+                    }
                 }
-                return tarjeta;
             }
         }
         return null;
     }
 
     public void crearTarjeta(Tarjeta tarjeta) throws SQLException {
-        String sql = "INSERT INTO Tarjetas (UsuarioID, Numero, Limite, Saldo, Tipo, TasaInteres) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Tarjetas (UsuarioID, Numero, Limite, Saldo, Tipo, TasaInteres, SaldoAPagar) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, tarjeta.getUsuarioId());
             pstmt.setString(2, tarjeta.getNumero());
@@ -63,8 +103,10 @@ public class TarjetaDAO {
             pstmt.setString(5, tarjeta.getClass().getSimpleName());
             if (tarjeta instanceof TarjetaCredito) {
                 pstmt.setDouble(6, ((TarjetaCredito) tarjeta).getTasaInteres());
+                pstmt.setDouble(7, ((TarjetaCredito) tarjeta).getSaldoAPagar());
             } else {
                 pstmt.setNull(6, Types.DOUBLE);
+                pstmt.setNull(7, Types.DOUBLE);
             }
             pstmt.executeUpdate();
 
@@ -78,7 +120,7 @@ public class TarjetaDAO {
     }
 
     public void actualizarTarjeta(Tarjeta tarjeta) throws SQLException {
-        String sql = "UPDATE Tarjetas SET Numero = ?, Limite = ?, Saldo = ?, Tipo = ?, TasaInteres = ? WHERE ID = ?";
+        String sql = "UPDATE Tarjetas SET Numero = ?, Limite = ?, Saldo = ?, Tipo = ?, TasaInteres = ?, SaldoAPagar = ? WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, tarjeta.getNumero());
             pstmt.setDouble(2, tarjeta.getLimite());
@@ -86,10 +128,12 @@ public class TarjetaDAO {
             pstmt.setString(4, tarjeta.getClass().getSimpleName());
             if (tarjeta instanceof TarjetaCredito) {
                 pstmt.setDouble(5, ((TarjetaCredito) tarjeta).getTasaInteres());
+                pstmt.setDouble(6, ((TarjetaCredito) tarjeta).getSaldoAPagar());
             } else {
                 pstmt.setNull(5, Types.DOUBLE);
+                pstmt.setNull(6, Types.DOUBLE);
             }
-            pstmt.setInt(6, tarjeta.getId());
+            pstmt.setInt(7, tarjeta.getId());
             pstmt.executeUpdate();
 
             UsuarioDAO.logAudit(tarjeta.getUsuarioId(), "TARJETA DE " + tarjeta.getClass().getSimpleName().toUpperCase() + " ACTUALIZADA", "Tarjeta de " + tarjeta.getClass().getSimpleName() + " actualizada con el nuevo balance: $" + tarjeta.getSaldo() + ", con el nuevo limite de: $" + tarjeta.getLimite());
@@ -118,7 +162,7 @@ public class TarjetaDAO {
                 Tarjeta tarjeta;
                 String tipo = rs.getString("Tipo");
                 if (tipo.equals("TarjetaCredito")) {
-                    tarjeta = new TarjetaCredito(rs.getInt("ID"), rs.getInt("UsuarioID"), rs.getString("Numero"), rs.getDouble("Limite"), rs.getDouble("Saldo"), rs.getDouble("TasaInteres"));
+                    tarjeta = new TarjetaCredito(rs.getInt("ID"), rs.getInt("UsuarioID"), rs.getString("Numero"), rs.getDouble("Limite"), rs.getDouble("Saldo"), rs.getDouble("SaldoAPagar"), rs.getDouble("TasaInteres"));
                 } else if (tipo.equals("TarjetaDebito")) {
                     tarjeta = new TarjetaDebito(rs.getInt("ID"), rs.getInt("UsuarioID"), rs.getString("Numero"), rs.getDouble("Limite"), rs.getDouble("Saldo"));
                 } else {
@@ -140,7 +184,7 @@ public class TarjetaDAO {
                 Tarjeta tarjeta;
                 String tipo = rs.getString("Tipo");
                 if (tipo.equals("TarjetaCredito")) {
-                    tarjeta = new TarjetaCredito(rs.getInt("ID"), rs.getInt("UsuarioID"), rs.getString("Numero"), rs.getDouble("Limite"), rs.getDouble("Saldo"), rs.getDouble("TasaInteres"));
+                    tarjeta = new TarjetaCredito(rs.getInt("ID"), rs.getInt("UsuarioID"), rs.getString("Numero"), rs.getDouble("Limite"), rs.getDouble("Saldo"), rs.getDouble("SaldoAPagar"), rs.getDouble("TasaInteres"));
                 } else if (tipo.equals("TarjetaDebito")) {
                     tarjeta = new TarjetaDebito(rs.getInt("ID"), rs.getInt("UsuarioID"), rs.getString("Numero"), rs.getDouble("Limite"), rs.getDouble("Saldo"));
                 } else {

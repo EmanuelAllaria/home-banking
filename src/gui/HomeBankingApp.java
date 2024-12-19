@@ -57,7 +57,7 @@ public class HomeBankingApp {
         Statement stmt = connection.createStatement();
         stmt.execute("CREATE TABLE IF NOT EXISTS Usuarios (ID INT PRIMARY KEY AUTO_INCREMENT, Nombre VARCHAR(255), Saldo DOUBLE)");
         stmt.execute("CREATE TABLE IF NOT EXISTS Cuentas (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT, Tipo VARCHAR(255), Saldo DOUBLE, TasaInteres DOUBLE DEFAULT 20.0)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS Tarjetas (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT, Numero VARCHAR(255), Limite DOUBLE, Saldo DOUBLE, Tipo VARCHAR(255), TasaInteres DOUBLE)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS Tarjetas (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT, Numero VARCHAR(255), Limite DOUBLE, Saldo DOUBLE, SaldoAPagar DOUBLE, Tipo VARCHAR(255), TasaInteres DOUBLE)");
         stmt.execute("CREATE TABLE IF NOT EXISTS Transferencias (ID INT PRIMARY KEY AUTO_INCREMENT, IdOrigen INT, IdDestino INT, Monto DOUBLE)");
         stmt.execute("CREATE TABLE IF NOT EXISTS MovimientosTarjeta (ID INT PRIMARY KEY AUTO_INCREMENT, TarjetaID INT NOT NULL, Monto DOUBLE NOT NULL, Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
         stmt.execute("CREATE TABLE IF NOT EXISTS MovimientosCuenta (ID INT PRIMARY KEY AUTO_INCREMENT, CuentaID INT NOT NULL, Tipo ENUM('Transferencia', 'Tarjeta', 'Cuenta') NOT NULL, Monto DOUBLE NOT NULL, Detalle VARCHAR(500), Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");

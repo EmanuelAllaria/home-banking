@@ -7,12 +7,7 @@ import service.UsuarioService;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.*;
-import service.UsuarioService;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.List;
 
 public class UsuarioGUI {
     private static UsuarioService usuarioService = new UsuarioService();
@@ -29,6 +24,7 @@ public class UsuarioGUI {
         createUserButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 usuarioService.createUser();
             }
         });
@@ -40,7 +36,10 @@ public class UsuarioGUI {
         listUsersButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                usuarioService.listUsers();
+                List<String> listUser = usuarioService.listUsers();
+                StringBuilder sb = new StringBuilder();
+                listUser.forEach(usuario -> sb.append(usuario + "\n"));
+                JOptionPane.showMessageDialog(null, sb.toString(), "Lista de Usuarios", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
@@ -51,6 +50,7 @@ public class UsuarioGUI {
         updateUserButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 usuarioService.updateUser();
             }
         });
@@ -62,6 +62,7 @@ public class UsuarioGUI {
         deleteUserButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 usuarioService.deleteUser();
             }
         });
@@ -73,6 +74,7 @@ public class UsuarioGUI {
         searchUserButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 usuarioService.searchUserById();
             }
         });

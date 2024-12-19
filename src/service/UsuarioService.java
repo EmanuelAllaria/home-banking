@@ -39,14 +39,12 @@ public class UsuarioService {
         try {
             UsuarioDAO usuarioDAO = new UsuarioDAO();
             List<Usuario> usuarios = usuarioDAO.listarUsuarios();
-            StringBuilder sb = new StringBuilder();
 
             for (Usuario usuario : usuarios) {
                 String usuarioInfo = "ID: " + usuario.getId() +
                         ", Nombre: " + usuario.getNombre() +
                         ", Saldo: " + usuario.getSaldo();
                 usuariosList.add(usuarioInfo);
-                sb.append(usuarioInfo).append("\n");
             }
 
         } catch (SQLException e) {
@@ -58,7 +56,7 @@ public class UsuarioService {
 
     public void updateUser() {
         try {
-            int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID del usuario a actualizar"));
+            int id = Integer.parseInt(JOptionPane.showInputDialog(null,"Ingrese ID del usuario a actualizar", "Actualización de usuario", JOptionPane.INFORMATION_MESSAGE));
             String nombre = JOptionPane.showInputDialog("Ingrese nuevo nombre del usuario");
             double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese nuevo saldo"));
 
