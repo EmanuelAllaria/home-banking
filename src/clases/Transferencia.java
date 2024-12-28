@@ -1,12 +1,11 @@
 package clases;
 
-
-
-
 public class Transferencia {
     private int idOrigen;
     private int idDestino;
     private double monto;
+
+    public Transferencia() {}
 
     public Transferencia(int idOrigen, int idDestino, double monto) {
         this.idOrigen = idOrigen;
@@ -21,4 +20,3 @@ public class Transferencia {
     public double getMonto() { return monto; }
     public void setMonto(double monto) { this.monto = monto; }
 }
-

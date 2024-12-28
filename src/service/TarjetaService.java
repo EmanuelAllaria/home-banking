@@ -123,12 +123,18 @@ public class TarjetaService {
                 sb.append("Tarjeta ID: ").append(tarjeta.getId())
                         .append(", Número: ").append(tarjeta.getNumero())
                         .append(", Límite: ").append(tarjeta.getLimite())
-                        .append(", Saldo: ").append(tarjeta.getSaldo())
-                        .append(", Usuario: ").append(usuario.getNombre())
+                        .append(", Saldo: ").append(tarjeta.getSaldo());
+
+                if (tarjeta instanceof TarjetaCredito) {
+                    TarjetaCredito tarjetaCredito = (TarjetaCredito) tarjeta;
+                    sb.append(", Saldo a Pagar: ").append(tarjetaCredito.getSaldoAPagar());
+                }
+
+                sb.append(", Usuario: ").append(usuario.getNombre())
                         .append("\n");
             }
 
-            JOptionPane.showMessageDialog(null, sb.toString(),"Lista de tarjetas", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, sb.toString(), "Lista de tarjetas", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (SQLException e) {
             e.printStackTrace();

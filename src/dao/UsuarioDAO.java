@@ -3,15 +3,12 @@ package dao;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import clases.Usuario;
-import javax.swing.*;
 
 public class UsuarioDAO {
     private static Connection connection;
 
     public UsuarioDAO() {
-        // Obtiene la conexión única desde DatabaseConnection (Singleton)
         this.connection = DatabaseConnection.getInstance().getConnection();
         if (this.connection == null) {
             throw new IllegalStateException("Database connection is not initialized.");
@@ -25,12 +22,12 @@ public class UsuarioDAO {
             pstmt.setDouble(2, usuario.getSaldo());
             pstmt.executeUpdate();
 
-            ResultSet generatedKeys = pstmt.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                usuario.setId(generatedKeys.getInt(1));
+            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    usuario.setId(generatedKeys.getInt(1));
+                }
             }
-
-            logAudit(usuario.getId(), "USUARIO CREADO", "Usuario creado con el balance: $" + usuario.getSaldo());
+            logAudit(usuario.getId(), "USUARIO CREADO", "Usuario creado con saldo: $" + usuario.getSaldo());
         }
     }
 
@@ -41,32 +38,51 @@ public class UsuarioDAO {
             pstmt.setDouble(2, usuario.getSaldo());
             pstmt.setInt(3, usuario.getId());
             pstmt.executeUpdate();
+            logAudit(usuario.getId(), "USUARIO ACTUALIZADO", "Usuario actualizado con saldo: $" + usuario.getSaldo());
         }
-
-        logAudit(usuario.getId(), "USUARIO ACTUALIZADO", "Usuario actualizado con el nuevo balance: $" + usuario.getSaldo());
     }
 
     public void eliminarUsuario(int id) throws SQLException {
-        String sql = "DELETE FROM Usuarios WHERE ID = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        String cuentasQuery = "SELECT COUNT(*) FROM Cuentas WHERE UsuarioID = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(cuentasQuery)) {
             pstmt.setInt(1, id);
-            pstmt.executeUpdate();
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    throw new SQLException("El usuario tiene cuentas asociadas. Elimine las cuentas primero.");
+                }
+            }
         }
 
-        logAudit(id, "USUARIO ELIMINADO", "Usuario eliminado.");
+        String tarjetasQuery = "SELECT COUNT(*) FROM Tarjetas WHERE UsuarioID = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(tarjetasQuery)) {
+            pstmt.setInt(1, id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    throw new SQLException("El usuario tiene tarjetas asociadas. Elimine las tarjetas primero.");
+                }
+            }
+        }
+
+        String deleteQuery = "DELETE FROM Usuarios WHERE ID = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(deleteQuery)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            logAudit(id, "USUARIO ELIMINADO", "Usuario con ID " + id + " eliminado.");
+        }
     }
 
     public static Usuario obtenerUsuarioPorId(int id) throws SQLException {
         String sql = "SELECT * FROM Usuarios WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                Usuario usuario = new Usuario();
-                usuario.setId(rs.getInt("ID"));
-                usuario.setNombre(rs.getString("Nombre"));
-                usuario.setSaldo(rs.getDouble("Saldo"));
-                return usuario;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Usuario(
+                            rs.getInt("ID"),
+                            rs.getString("Nombre"),
+                            rs.getDouble("Saldo")
+                    );
+                }
             }
         }
         return null;
@@ -75,30 +91,36 @@ public class UsuarioDAO {
     public List<Usuario> listarUsuarios() throws SQLException {
         List<Usuario> usuarios = new ArrayList<>();
         String sql = "SELECT * FROM Usuarios";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            ResultSet rs = stmt.executeQuery();
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                Usuario usuario = new Usuario();
-                usuario.setId(rs.getInt("ID"));
-                usuario.setNombre(rs.getString("Nombre"));
-                usuario.setSaldo(rs.getDouble("Saldo"));
-                usuarios.add(usuario);
+                usuarios.add(new Usuario(
+                        rs.getInt("ID"),
+                        rs.getString("Nombre"),
+                        rs.getDouble("Saldo")
+                ));
             }
         }
         return usuarios;
     }
 
     public static Usuario obtenerUsuarioPorCuentaId(int cuentaId) throws SQLException {
-        String sql = "SELECT Usuarios.* FROM Usuarios LEFT JOIN Cuentas ON Usuarios.ID = Cuentas.UsuarioID WHERE Cuentas.ID = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, cuentaId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                Usuario usuario = new Usuario();
-                usuario.setId(rs.getInt("ID"));
-                usuario.setNombre(rs.getString("Nombre"));
-                usuario.setSaldo(rs.getDouble("Saldo"));
-                return usuario;
+        String sql = """
+            SELECT u.* 
+            FROM Usuarios u 
+            JOIN Cuentas c ON u.ID = c.UsuarioID 
+            WHERE c.ID = ?
+        """;
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, cuentaId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Usuario(
+                            rs.getInt("ID"),
+                            rs.getString("Nombre"),
+                            rs.getDouble("Saldo")
+                    );
+                }
             }
         }
         return null;
@@ -111,8 +133,6 @@ public class UsuarioDAO {
             pstmt.setString(2, action);
             pstmt.setString(3, details);
             pstmt.executeUpdate();
-
-            JOptionPane.showMessageDialog(null, details, action, JOptionPane.INFORMATION_MESSAGE);
         }
     }
 }

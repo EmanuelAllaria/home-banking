@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
@@ -11,32 +12,33 @@ public class ResumenGUI {
     private static JTextArea resumenDetailsTextArea;
 
     public static void placeGestionResumenComponents(JInternalFrame frame) {
-        JPanel panel = new JPanel();
-        panel.setLayout(null);
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         frame.add(panel);
 
-        resumenDetailsTextArea = new JTextArea();
-        resumenDetailsTextArea.setEditable(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
 
-        JScrollPane scrollPane = new JScrollPane(resumenDetailsTextArea);
-        scrollPane.setBounds(10, 160, 300, 200);
-        panel.add(scrollPane);
-
+        // Botón para listar resúmenes
         JButton listResumenesButton = new JButton("Listar Resúmenes");
-        listResumenesButton.setBounds(10, 20, 160, 25);
-        panel.add(listResumenesButton);
+        styleButton(listResumenesButton);
+        gbc.gridy = 0;
+        panel.add(listResumenesButton, gbc);
 
         listResumenesButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                updateResumenList();  // Actualizar la lista de resúmenes
+                updateResumenList();
             }
         });
 
-        // Botón para ver resumen detallado por cuenta
+        // Botón para ver resumen por cuenta
         JButton viewResumenByCuentaButton = new JButton("Ver Resumen por Cuenta");
-        viewResumenByCuentaButton.setBounds(10, 50, 160, 25);
-        panel.add(viewResumenByCuentaButton);
+        styleButton(viewResumenByCuentaButton);
+        gbc.gridy = 1;
+        panel.add(viewResumenByCuentaButton, gbc);
 
         viewResumenByCuentaButton.addActionListener(new ActionListener() {
             @Override
@@ -44,26 +46,48 @@ public class ResumenGUI {
                 String cuentaIdStr = JOptionPane.showInputDialog("Ingrese el ID de la cuenta:");
                 try {
                     int cuentaId = Integer.parseInt(cuentaIdStr);
-                    updateResumenByCuenta(cuentaId);  // Actualizar el resumen de una cuenta específica
+                    updateResumenByCuenta(cuentaId);
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(frame, "ID de cuenta inválido");
+                    JOptionPane.showMessageDialog(panel, "ID de cuenta inválido", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
 
-        // Cargar la lista de resúmenes al iniciar la interfaz
+        // Área de texto para mostrar resúmenes
+        resumenDetailsTextArea = new JTextArea(10, 30);
+        resumenDetailsTextArea.setEditable(false);
+        resumenDetailsTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+        JScrollPane scrollPane = new JScrollPane(resumenDetailsTextArea);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Detalles de Resúmenes"));
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        panel.add(scrollPane, gbc);
+
+        // Cargar la lista de resúmenes al iniciar
         updateResumenList();
     }
 
     private static void updateResumenList() {
         StringBuilder sb = new StringBuilder();
-        resumenService.listResumenes(sb);
+        resumenService.listarResumenes(sb);
         resumenDetailsTextArea.setText(sb.toString());
     }
 
     private static void updateResumenByCuenta(int cuentaId) {
         StringBuilder sb = new StringBuilder();
-        resumenService.getResumenByCuenta(cuentaId, sb);
+        resumenService.obtenerResumenPorCuenta(cuentaId, sb);
         resumenDetailsTextArea.setText(sb.toString());
+    }
+
+    private static void styleButton(JButton button) {
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setBackground(new Color(0, 123, 255));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
 }

@@ -3,113 +3,97 @@ package service;
 import javax.swing.*;
 import clases.Usuario;
 import dao.UsuarioDAO;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import javax.swing.JOptionPane;
 
 public class UsuarioService {
-    private static List<String> usuarios;
 
     public void createUser() {
         try {
-            String nombre = JOptionPane.showInputDialog("Ingrese nombre del usuario");
-            double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese saldo inicial"));
+            String nombre = JOptionPane.showInputDialog("Ingrese el nombre del usuario");
+            double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese el saldo inicial"));
 
-            Usuario usuario = new Usuario();
-            usuario.setNombre(nombre);
-            usuario.setSaldo(saldo);
-
+            Usuario usuario = new Usuario(0, nombre, saldo);
             UsuarioDAO usuarioDAO = new UsuarioDAO();
             usuarioDAO.crearUsuario(usuario);
 
-            JOptionPane.showMessageDialog(null, "Usuario creado con éxito!");
-
+            JOptionPane.showMessageDialog(null, "Usuario creado con éxito!\nID: " + usuario.getId());
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al crear usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    public static List<String> listUsers() {
-        List<String> usuariosList = new ArrayList<>();
+    public List<String> listUsers() {
         try {
             UsuarioDAO usuarioDAO = new UsuarioDAO();
             List<Usuario> usuarios = usuarioDAO.listarUsuarios();
-
+            StringBuilder sb = new StringBuilder("Lista de Usuarios:\n");
             for (Usuario usuario : usuarios) {
-                String usuarioInfo = "ID: " + usuario.getId() +
-                        ", Nombre: " + usuario.getNombre() +
-                        ", Saldo: " + usuario.getSaldo();
-                usuariosList.add(usuarioInfo);
+                sb.append("ID: ").append(usuario.getId())
+                        .append(", Nombre: ").append(usuario.getNombre())
+                        .append(", Saldo: ").append(usuario.getSaldo())
+                        .append("\n");
             }
-
+            JOptionPane.showMessageDialog(null, sb.toString(), "Usuarios", JOptionPane.INFORMATION_MESSAGE);
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al listar usuarios: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+        return null;
+    }
 
-        return usuariosList;
+    public List<Usuario> listUsersForTransferencia() {
+        try {
+            UsuarioDAO usuarioDAO = new UsuarioDAO();
+            List<Usuario> usuarios = usuarioDAO.listarUsuarios();
+            return usuarios;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al listar usuarios: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return null;
     }
 
     public void updateUser() {
         try {
-            int id = Integer.parseInt(JOptionPane.showInputDialog(null,"Ingrese ID del usuario a actualizar", "Actualización de usuario", JOptionPane.INFORMATION_MESSAGE));
-            String nombre = JOptionPane.showInputDialog("Ingrese nuevo nombre del usuario");
-            double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese nuevo saldo"));
+            int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese el ID del usuario a actualizar"));
+            String nombre = JOptionPane.showInputDialog("Ingrese el nuevo nombre");
+            double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese el nuevo saldo"));
 
-            Usuario usuario = new Usuario();
-            usuario.setId(id);
-            usuario.setNombre(nombre);
-            usuario.setSaldo(saldo);
-
+            Usuario usuario = new Usuario(id, nombre, saldo);
             UsuarioDAO usuarioDAO = new UsuarioDAO();
             usuarioDAO.actualizarUsuario(usuario);
 
             JOptionPane.showMessageDialog(null, "Usuario actualizado con éxito!");
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al actualizar usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public void deleteUser() {
         try {
-            int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID del usuario a eliminar"));
-
+            int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese el ID del usuario a eliminar"));
             UsuarioDAO usuarioDAO = new UsuarioDAO();
             usuarioDAO.eliminarUsuario(id);
 
             JOptionPane.showMessageDialog(null, "Usuario eliminado con éxito!");
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al eliminar usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public void searchUserById() {
         try {
-            int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID del usuario a buscar"));
-
-            UsuarioDAO usuarioDAO = new UsuarioDAO();
-            Usuario usuario = usuarioDAO.obtenerUsuarioPorId(id);
+            int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese el ID del usuario a buscar"));
+            Usuario usuario = UsuarioDAO.obtenerUsuarioPorId(id);
 
             if (usuario != null) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("ID: ").append(usuario.getId())
-                        .append(", Nombre: ").append(usuario.getNombre())
-                        .append(", Saldo: ").append(usuario.getSaldo())
-                        .append("\n");
-
-                JOptionPane.showMessageDialog(null, sb.toString());
+                JOptionPane.showMessageDialog(null, "ID: " + usuario.getId() +
+                        "\nNombre: " + usuario.getNombre() +
+                        "\nSaldo: " + usuario.getSaldo(), "Usuario Encontrado", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(null, "Usuario no encontrado!");
+                JOptionPane.showMessageDialog(null, "Usuario no encontrado", "Información", JOptionPane.WARNING_MESSAGE);
             }
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al buscar usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

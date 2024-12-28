@@ -1,11 +1,12 @@
 package gui;
 
 import javax.swing.*;
-
 import clases.*;
 import service.*;
 
-import java.awt.event.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -15,98 +16,124 @@ public class TransferenciaGUI {
     private static JTextArea transferDetailsArea;
 
     public static void placeTransferenciasComponents(JInternalFrame frame) {
-        JPanel panel = new JPanel();
-        panel.setLayout(null);
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         frame.add(panel);
 
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+
+        // Etiqueta Usuario
         JLabel userLabel = new JLabel("Usuario:");
-        userLabel.setBounds(10, 20, 80, 25);
-        panel.add(userLabel);
+        gbc.gridy = 0;
+        panel.add(userLabel, gbc);
 
+        // ComboBox Usuario
         JComboBox<String> userComboBox = new JComboBox<>();
-        userComboBox.setBounds(100, 20, 160, 25);
-        panel.add(userComboBox);
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        panel.add(userComboBox, gbc);
 
-        List<String> usuarios;
+        List<Usuario> usuarios;
         try {
-            usuarios = UsuarioService.listUsers();
-            for (String usuario : usuarios) {
-                userComboBox.addItem(usuario);
+            UsuarioService usuarioService = new UsuarioService();
+            usuarios = usuarioService.listUsersForTransferencia();
+            if (usuarios != null) {
+                for (Usuario usuario : usuarios) {
+                    userComboBox.addItem("Usuario ID: " + usuario.getId() + ", Nombre: " + usuario.getNombre());
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "No se encontraron usuarios disponibles.", "Información", JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al obtener la lista de usuarios: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
+        // Etiqueta Cuenta Origen
         JLabel sourceAccountLabel = new JLabel("Cuenta Origen:");
-        sourceAccountLabel.setBounds(10, 50, 100, 25);
-        panel.add(sourceAccountLabel);
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridwidth = 1;
+        panel.add(sourceAccountLabel, gbc);
 
+        // ComboBox Cuenta Origen
         JComboBox<String> sourceAccountComboBox = new JComboBox<>();
-        sourceAccountComboBox.setBounds(120, 50, 160, 25);
-        panel.add(sourceAccountComboBox);
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        panel.add(sourceAccountComboBox, gbc);
 
+        // Etiqueta Cuenta Destino
         JLabel destinationAccountLabel = new JLabel("Cuenta Destino:");
-        destinationAccountLabel.setBounds(10, 80, 100, 25);
-        panel.add(destinationAccountLabel);
+        gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridwidth = 1;
+        panel.add(destinationAccountLabel, gbc);
 
+        // ComboBox Cuenta Destino
         JComboBox<String> destinationAccountComboBox = new JComboBox<>();
-        destinationAccountComboBox.setBounds(120, 80, 160, 25);
-        panel.add(destinationAccountComboBox);
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        panel.add(destinationAccountComboBox, gbc);
 
+        // Etiqueta Monto
         JLabel amountLabel = new JLabel("Monto:");
-        amountLabel.setBounds(10, 110, 100, 25);
-        panel.add(amountLabel);
+        gbc.gridy = 3;
+        gbc.gridx = 0;
+        gbc.gridwidth = 1;
+        panel.add(amountLabel, gbc);
 
+        // Campo de texto Monto
         JTextField amountField = new JTextField();
-        amountField.setBounds(120, 110, 160, 25);
-        panel.add(amountField);
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        panel.add(amountField, gbc);
 
-        transferDetailsArea = new JTextArea();
+        // Área de texto para detalles
+        transferDetailsArea = new JTextArea(10, 30);
         transferDetailsArea.setEditable(false);
+        transferDetailsArea.setBorder(BorderFactory.createTitledBorder("Detalles de Transferencia"));
         JScrollPane scrollPane = new JScrollPane(transferDetailsArea);
-        scrollPane.setBounds(10, 140, 270, 100);
-        panel.add(scrollPane);
+        gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, gbc);
 
+        // Botón Transferir
         JButton transferButton = new JButton("Transferir");
-        transferButton.setBounds(10, 250, 160, 25);
-        panel.add(transferButton);
+        styleButton(transferButton);
+        gbc.gridy = 5;
+        gbc.gridx = 0;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(transferButton, gbc);
 
-        // Llenar el sourceAccountComboBox cuando se seleccione un usuario
+        // Eventos
         userComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String usuarioSeleccionado = (String) userComboBox.getSelectedItem();
-                String id = usuarioSeleccionado.split(",")[0].replace("ID: ", "").trim();
+                String id = usuarioSeleccionado.split(",")[0].replace("Usuario ID: ", "").trim();
                 int usuarioId = Integer.parseInt(id);
+
                 sourceAccountComboBox.removeAllItems();
-                List<Cuenta> cuentas = null;
-                try {
-                    cuentas = cuentaService.listarCuentasPorUsuarioId(usuarioId);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-                for (Cuenta cuenta : cuentas) {
-                    sourceAccountComboBox.addItem(String.valueOf(cuenta));
-                }
-            }
-        });
-
-        // Llenar el sourceAccountComboBox cuando se seleccione un usuario
-        userComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String usuarioSeleccionado = (String) userComboBox.getSelectedItem();
-                String id = usuarioSeleccionado.split(",")[0].replace("ID: ", "").trim();
-                int usuarioId = Integer.parseInt(id);
                 destinationAccountComboBox.removeAllItems();
-                List<Cuenta> cuentas = null;
+
                 try {
+                    List<Cuenta> cuentas = cuentaService.listarCuentasPorUsuarioId(usuarioId);
+                    for (Cuenta cuenta : cuentas) {
+                        sourceAccountComboBox.addItem(String.valueOf(cuenta));
+                    }
+
                     cuentas = cuentaService.listarCuentasSinUsuarioId(usuarioId);
+                    for (Cuenta cuenta : cuentas) {
+                        destinationAccountComboBox.addItem(String.valueOf(cuenta));
+                    }
                 } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-                for (Cuenta cuenta : cuentas) {
-                    destinationAccountComboBox.addItem(String.valueOf(cuenta));
+                    ex.printStackTrace();
                 }
             }
         });
@@ -115,28 +142,33 @@ public class TransferenciaGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    // Extrae solo el ID de la cuenta de origen
+                    // Extraer solo el número del ID de la cuenta origen
                     String cuentaOrigenSeleccionada = (String) sourceAccountComboBox.getSelectedItem();
-                    String idOrigenStr = cuentaOrigenSeleccionada.split(",")[0].replace("ID: ", "").trim();
-                    int idOrigen = Integer.parseInt(idOrigenStr);
+                    System.out.println(cuentaOrigenSeleccionada);
+                    int idOrigen = Integer.parseInt(cuentaOrigenSeleccionada.split(",")[0].replace("ID Cuenta: ", "").trim());
 
-                    // Extrae solo el ID de la cuenta destino
-                    String cuentaDestino = (String) destinationAccountComboBox.getSelectedItem();
-                    String idDestinoStr = cuentaDestino.split(",")[0].replace("ID: ", "").trim();
-                    int idDestino = Integer.parseInt(idDestinoStr);
+                    // Extraer solo el número del ID de la cuenta destino
+                    String cuentaDestinoSeleccionada = (String) destinationAccountComboBox.getSelectedItem();
+                    int idDestino = Integer.parseInt(cuentaDestinoSeleccionada.split(",")[0].replace("ID Cuenta: ", "").trim());
 
-                    // Convierte el monto
+                    // Obtener el monto
                     double monto = Double.parseDouble(amountField.getText());
 
-                    // Llama al servicio de transferencia con los IDs procesados
+                    // Llamar al servicio de transferencia
                     String result = transferenciaService.realizarTransferencia(new Transferencia(idOrigen, idDestino, monto));
                     transferDetailsArea.setText(result);
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(panel, "Por favor ingrese valores válidos", "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(panel, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
+    }
+
+    private static void styleButton(JButton button) {
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setBackground(new Color(0, 153, 76));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
     }
 }

@@ -1,9 +1,11 @@
 package gui;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 import service.CuentaService;
+import javax.swing.border.TitledBorder;
 
 public class CuentaGUI {
 
@@ -11,72 +13,72 @@ public class CuentaGUI {
     private static JTextArea accountDetailsTextArea;
 
     public static void placeGestionCuentasComponents(JInternalFrame frame) {
-        // Crear el panel
-        JPanel panel = new JPanel();
-        panel.setLayout(null);  // Establecer layout nulo para el control total de los tamaños y posiciones
+        // Configurar el panel principal con GridBagLayout para un diseño moderno
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         frame.add(panel);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10); // Espaciado entre componentes
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
 
         // Botón para crear cuenta
         JButton createAccountButton = new JButton("Crear Cuenta");
-        createAccountButton.setBounds(10, 20, 160, 25);
-        panel.add(createAccountButton);
+        styleButton(createAccountButton);
+        gbc.gridy = 0;
+        panel.add(createAccountButton, gbc);
         createAccountButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cuentaService.createAccount();  // Crear cuenta
-                updateAccountList();  // Actualizar la lista de cuentas
+                cuentaService.createAccount();
+                updateAccountList();
             }
         });
 
-        // Botón para listar cuentas (Inicialización de JTextArea y JScrollPane)
-        accountDetailsTextArea = new JTextArea();
-        accountDetailsTextArea.setEditable(false);
-
-        JScrollPane scrollPane = new JScrollPane(accountDetailsTextArea);
-        scrollPane.setBounds(10, 200, 300, 200);
-        panel.add(scrollPane);
-
+        // Botón para listar cuentas
         JButton listAccountsButton = new JButton("Listar Cuentas");
-        listAccountsButton.setBounds(10, 50, 160, 25);
-        panel.add(listAccountsButton);
-
+        styleButton(listAccountsButton);
+        gbc.gridy = 1;
+        panel.add(listAccountsButton, gbc);
         listAccountsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                updateAccountList();  // Actualizar la lista de cuentas
+                updateAccountList();
             }
         });
 
         // Botón para actualizar cuenta
         JButton updateAccountButton = new JButton("Actualizar Cuenta");
-        updateAccountButton.setBounds(10, 80, 160, 25);
-        panel.add(updateAccountButton);
-
+        styleButton(updateAccountButton);
+        gbc.gridy = 2;
+        panel.add(updateAccountButton, gbc);
         updateAccountButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cuentaService.updateAccount();  // Actualizar cuenta
-                updateAccountList();  // Actualizar la lista de cuentas
+                cuentaService.updateAccount();
+                updateAccountList();
             }
         });
 
         // Botón para eliminar cuenta
         JButton deleteAccountButton = new JButton("Eliminar Cuenta");
-        deleteAccountButton.setBounds(10, 110, 160, 25);
-        panel.add(deleteAccountButton);
-
+        styleButton(deleteAccountButton);
+        gbc.gridy = 3;
+        panel.add(deleteAccountButton, gbc);
         deleteAccountButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cuentaService.deleteAccount();  // Eliminar cuenta
-                updateAccountList();  // Actualizar la lista de cuentas
+                cuentaService.deleteAccount();
+                updateAccountList();
             }
         });
 
+        // Botón para generar reporte de movimientos
         JButton generarReporteButton = new JButton("Generar Reporte Movimientos");
-        generarReporteButton.setBounds(10, 140, 200, 25);
-        panel.add(generarReporteButton);
-
+        styleButton(generarReporteButton);
+        gbc.gridy = 4;
+        panel.add(generarReporteButton, gbc);
         generarReporteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -84,34 +86,60 @@ public class CuentaGUI {
                     int cuentaId = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la cuenta"));
                     int mes = Integer.parseInt(JOptionPane.showInputDialog("Ingrese mes (1-12)"));
                     int anio = Integer.parseInt(JOptionPane.showInputDialog("Ingrese año"));
-
                     cuentaService.generarReporteMovimientos(cuentaId, mes, anio);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(panel, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
 
+        // Botón para generar intereses
         JButton generarInteresesButton = new JButton("Generar Intereses");
-        generarInteresesButton.setBounds(10, 170, 160, 25);
-        panel.add(generarInteresesButton);
-
+        styleButton(generarInteresesButton);
+        gbc.gridy = 5;
+        panel.add(generarInteresesButton, gbc);
         generarInteresesButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cuentaService.generarIntereses();  // Generar intereses
+                cuentaService.generarIntereses();
                 updateAccountList();
             }
         });
+
+        // Área de texto para mostrar detalles de las cuentas
+        accountDetailsTextArea = new JTextArea();
+        accountDetailsTextArea.setEditable(false);
+        accountDetailsTextArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        JScrollPane scrollPane = new JScrollPane(accountDetailsTextArea);
+        scrollPane.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                "Detalles de Cuentas",
+                TitledBorder.LEFT,
+                TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 16),
+                Color.BLUE
+        ));
+        scrollPane.setPreferredSize(new Dimension(400, 200));
+        panel.setLayout(new FlowLayout());
+        panel.add(scrollPane);
 
         // Cargar la lista de cuentas al iniciar la interfaz
         updateAccountList();
     }
 
+    // Método para estilizar botones
+    private static void styleButton(JButton button) {
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setBackground(new Color(0, 123, 255));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    }
+
     // Método para actualizar la lista de cuentas en el JTextArea
     private static void updateAccountList() {
         StringBuilder sb = new StringBuilder();
-        cuentaService.listAccounts(sb);  // Obtener las cuentas y llenar el StringBuilder
-        accountDetailsTextArea.setText(sb.toString());  // Actualizar el JTextArea con la lista actualizada
+        cuentaService.listAccounts(sb);
+        accountDetailsTextArea.setText(sb.toString());
     }
 }

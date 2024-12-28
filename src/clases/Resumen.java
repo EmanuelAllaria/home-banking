@@ -7,7 +7,8 @@ public class Resumen {
     private int idOrigen;
     private int idDestino;
 
-    public Resumen() {}
+    public Resumen() {
+    }
 
     public Resumen(int id, int usuarioId, double monto, int idOrigen, int idDestino) {
         this.id = id;

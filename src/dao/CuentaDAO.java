@@ -1,19 +1,14 @@
 package dao;
 
-
-
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import clases.Cuenta;
 import clases.MovimientoCuenta;
+import clases.CuentaAhorro;
+import clases.CuentaCorriente;
 import clases.Usuario;
-
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CuentaDAO {
     private Connection connection;
@@ -27,9 +22,9 @@ public class CuentaDAO {
         String sql = "INSERT INTO Cuentas (UsuarioID, Tipo, Saldo, TasaInteres) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, cuenta.getUsuarioId());
-            pstmt.setString(2, cuenta.getTipo());
+            pstmt.setString(2, cuenta instanceof CuentaCorriente ? "Corriente" : "Ahorro");
             pstmt.setDouble(3, cuenta.getSaldo());
-            pstmt.setDouble(4, cuenta.getTasaInteres());
+            pstmt.setDouble(4, cuenta instanceof CuentaAhorro ? ((CuentaAhorro) cuenta).getTasaInteres() : 0);
             pstmt.executeUpdate();
 
             ResultSet generatedKeys = pstmt.getGeneratedKeys();
@@ -44,9 +39,9 @@ public class CuentaDAO {
     public void actualizarCuenta(Cuenta cuenta) throws SQLException {
         String sql = "UPDATE Cuentas SET Tipo = ?, Saldo = ?, TasaInteres = ? WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, cuenta.getTipo());
+            pstmt.setString(1, cuenta instanceof CuentaCorriente ? "Corriente" : "Ahorro");
             pstmt.setDouble(2, cuenta.getSaldo());
-            pstmt.setDouble(3, cuenta.getTasaInteres());
+            pstmt.setDouble(3, cuenta instanceof CuentaAhorro ? ((CuentaAhorro) cuenta).getTasaInteres() : 0);
             pstmt.setInt(4, cuenta.getId());
             pstmt.executeUpdate();
 
@@ -72,12 +67,23 @@ public class CuentaDAO {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                Cuenta cuenta = new Cuenta();
-                cuenta.setId(rs.getInt("ID"));
-                cuenta.setUsuarioId(rs.getInt("UsuarioID"));
-                cuenta.setTipo(rs.getString("Tipo"));
-                cuenta.setTasaInteres(rs.getDouble("TasaInteres"));
-                cuenta.setSaldo(rs.getDouble("Saldo"));
+                String tipo = rs.getString("Tipo");
+                Cuenta cuenta;
+                if ("Corriente".equalsIgnoreCase(tipo)) {
+                    cuenta = new CuentaCorriente(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo"),
+                            0 // Puedes agregar lógica para límite de sobregiro
+                    );
+                } else {
+                    cuenta = new CuentaAhorro(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo")
+                    );
+                    ((CuentaAhorro) cuenta).setTasaInteres(rs.getDouble("TasaInteres"));
+                }
                 return cuenta;
             }
         }
@@ -90,70 +96,26 @@ public class CuentaDAO {
         try (Statement stmt = connection.createStatement()) {
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                Cuenta cuenta = new Cuenta();
-                cuenta.setId(rs.getInt("ID"));
-                cuenta.setUsuarioId(rs.getInt("UsuarioID"));
-                cuenta.setTipo(rs.getString("Tipo"));
-                cuenta.setSaldo(rs.getDouble("Saldo"));
-                cuenta.setTasaInteres(rs.getDouble("TasaInteres"));
+                String tipo = rs.getString("Tipo");
+                Cuenta cuenta;
+                if ("Corriente".equalsIgnoreCase(tipo)) {
+                    cuenta = new CuentaCorriente(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo"),
+                            0 // Puedes agregar lógica para límite de sobregiro
+                    );
+                } else {
+                    cuenta = new CuentaAhorro(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo")
+                    );
+                    ((CuentaAhorro) cuenta).setTasaInteres(rs.getDouble("TasaInteres"));
+                }
                 cuentas.add(cuenta);
             }
         }
-        return cuentas;
-    }
-
-    public List<Cuenta> listarCuentasPorUsuarioId(int usuarioId) throws SQLException {
-        List<Cuenta> cuentas = new ArrayList<>();
-        String sql = "SELECT * FROM Cuentas WHERE UsuarioID = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, usuarioId);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                Cuenta cuenta = new Cuenta();
-                cuenta.setId(rs.getInt("ID"));
-                cuenta.setUsuarioId(rs.getInt("UsuarioID"));
-                cuenta.setTipo(rs.getString("Tipo"));
-                cuenta.setSaldo(rs.getDouble("Saldo"));
-                cuentas.add(cuenta);
-            }
-        }
-        return cuentas;
-    }
-
-    public List<Cuenta> listarCuentasPorTarjetaId(int tarjetaId) throws SQLException {
-        List<Cuenta> cuentas = new ArrayList<>();
-        String sql = "SELECT Cuentas.* FROM Cuentas LEFT JOIN Tarjetas ON Cuentas.UsuarioID = Tarjetas.UsuarioID WHERE Tarjetas.ID = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, tarjetaId);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                Cuenta cuenta = new Cuenta();
-                cuenta.setId(rs.getInt("ID"));
-                cuenta.setUsuarioId(rs.getInt("UsuarioID"));
-                cuenta.setTipo(rs.getString("Tipo"));
-                cuenta.setSaldo(rs.getDouble("Saldo"));
-                cuentas.add(cuenta);
-            }
-        }
-        return cuentas;
-    }
-
-    public List<Cuenta> listarCuentasSinUsuarioId(int usuarioId) throws SQLException {
-        List<Cuenta> cuentas = new ArrayList<>();
-        String sql = "SELECT * FROM Cuentas WHERE UsuarioID != ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, usuarioId);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                Cuenta cuenta = new Cuenta();
-                cuenta.setId(rs.getInt("ID"));
-                cuenta.setUsuarioId(rs.getInt("UsuarioID"));
-                cuenta.setTipo(rs.getString("Tipo"));
-                cuenta.setSaldo(rs.getDouble("Saldo"));
-                cuentas.add(cuenta);
-            }
-        }
-
         return cuentas;
     }
 
@@ -188,11 +150,11 @@ public class CuentaDAO {
         Usuario usuarioOrigen = UsuarioDAO.obtenerUsuarioPorCuentaId(cuentaId);
         Usuario usuarioDAO = UsuarioDAO.obtenerUsuarioPorId(usuarioId);
         String detalle = null;
-        if (tipo == "Transferencia") {
+        if ("Transferencia".equals(tipo)) {
             detalle = "Transferencia a: " + usuarioDAO.getNombre();
-        } else if (tipo == "Tarjeta") {
+        } else if ("Tarjeta".equals(tipo)) {
             detalle = "Debito registrado por: $: " + monto;
-        } else if (tipo == "Cuenta") {
+        } else if ("Cuenta".equals(tipo)) {
             detalle = "Intereses generados: $: " + monto;
         }
 
@@ -208,7 +170,99 @@ public class CuentaDAO {
             UsuarioDAO.logAudit(usuarioOrigen.getId(), tipo, detalle);
         }
     }
+
+    public List<Cuenta> listarCuentasPorUsuarioId(int usuarioId) throws SQLException {
+        List<Cuenta> cuentas = new ArrayList<>();
+        String sql = "SELECT * FROM Cuentas WHERE UsuarioID = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, usuarioId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                String tipo = rs.getString("Tipo");
+                Cuenta cuenta;
+                if ("Corriente".equalsIgnoreCase(tipo)) {
+                    cuenta = new CuentaCorriente(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo"),
+                            0 // Puedes agregar lógica para límite de sobregiro
+                    );
+                } else {
+                    cuenta = new CuentaAhorro(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo")
+                    );
+                    ((CuentaAhorro) cuenta).setTasaInteres(rs.getDouble("TasaInteres"));
+                }
+                cuentas.add(cuenta);
+            }
+        }
+        return cuentas;
+    }
+
+    public List<Cuenta> listarCuentasSinUsuarioId(int usuarioId) throws SQLException {
+        List<Cuenta> cuentas = new ArrayList<>();
+        String sql = "SELECT * FROM Cuentas WHERE UsuarioID != ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, usuarioId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                String tipo = rs.getString("Tipo");
+                Cuenta cuenta;
+                if ("Corriente".equalsIgnoreCase(tipo)) {
+                    cuenta = new CuentaCorriente(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo"),
+                            0 // Puedes agregar lógica para límite de sobregiro
+                    );
+                } else {
+                    cuenta = new CuentaAhorro(
+                            rs.getInt("ID"),
+                            rs.getInt("UsuarioID"),
+                            rs.getDouble("Saldo")
+                    );
+                    ((CuentaAhorro) cuenta).setTasaInteres(rs.getDouble("TasaInteres"));
+                }
+                cuentas.add(cuenta);
+            }
+        }
+        return cuentas;
+    }
+
+    public List<Cuenta> listarCuentasPorTarjetaId(int tarjetaId) throws SQLException {
+        String sql = """
+            SELECT c.* FROM Cuentas c
+            JOIN Tarjetas t ON c.UsuarioID = t.UsuarioID
+            WHERE t.ID = ?
+        """;
+        List<Cuenta> cuentas = new ArrayList<>();
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, tarjetaId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String tipo = rs.getString("Tipo");
+                    Cuenta cuenta;
+                    if ("Corriente".equalsIgnoreCase(tipo)) {
+                        cuenta = new CuentaCorriente(
+                                rs.getInt("ID"),
+                                rs.getInt("UsuarioID"),
+                                rs.getDouble("Saldo"),
+                                0 // Ajustar lógica de sobregiro si es necesario
+                        );
+                    } else {
+                        cuenta = new CuentaAhorro(
+                                rs.getInt("ID"),
+                                rs.getInt("UsuarioID"),
+                                rs.getDouble("Saldo")
+                        );
+                        ((CuentaAhorro) cuenta).setTasaInteres(rs.getDouble("TasaInteres"));
+                    }
+                    cuentas.add(cuenta);
+                }
+            }
+        }
+        return cuentas;
+    }
 }
-
-
-

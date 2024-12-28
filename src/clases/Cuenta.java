@@ -1,37 +1,48 @@
 package clases;
 
-
-
-public class Cuenta {
+public abstract class Cuenta {
     private int id;
     private int usuarioId;
-    private String tipo;
-    private double saldo;
-    private double tasaInteres;
+    protected double saldo;
 
-    public Cuenta() {}
-
-    public Cuenta(int id, int usuarioId, String tipo, double saldo, double tasaInteres) {
+    public Cuenta(int id, int usuarioId, double saldo) {
         this.id = id;
         this.usuarioId = usuarioId;
-        this.tipo = tipo;
         this.saldo = saldo;
-        this.tasaInteres = tasaInteres;
     }
+
+    public void depositar(double monto) {
+        if (monto > 0) {
+            saldo += monto;
+        } else {
+            System.out.println("Monto inválido para depósito.");
+        }
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public double getSaldo() {
+        return saldo;
+    }
+
+    public void setSaldo(double saldo) {
+        this.saldo = saldo;
+    }
+
+    public int getUsuarioId() {
+        return usuarioId;
+    }
+
+    public abstract void retirar(double monto);
 
     @Override
     public String toString() {
-        return "ID: " + this.id;
+        return "ID Cuenta: " + id + ", Saldo: " + saldo;
     }
-
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    public int getUsuarioId() { return usuarioId; }
-    public void setUsuarioId(int usuarioId) { this.usuarioId = usuarioId; }
-    public String getTipo() { return tipo; }
-    public void setTipo(String tipo) { this.tipo = tipo; }
-    public double getSaldo() { return saldo; }
-    public void setSaldo(double saldo) { this.saldo = saldo; }
-    public double getTasaInteres() { return tasaInteres; }
-    public void setTasaInteres(double tasaInteres) { this.tasaInteres = tasaInteres; }
 }

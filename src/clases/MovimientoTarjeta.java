@@ -15,7 +15,6 @@ public class MovimientoTarjeta {
         this.fecha = fecha;
     }
 
-    // Getters y Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getTarjetaId() { return tarjetaId; }

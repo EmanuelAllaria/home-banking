@@ -1,19 +1,13 @@
 package service;
 
-
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Connection;
+import java.io.*;
 import java.sql.SQLException;
 import java.util.List;
 
 import javax.swing.JOptionPane;
 
-import clases.MovimientoCuenta;
-import clases.Cuenta;
-import clases.Usuario;
-import dao.CuentaDAO;
-import dao.UsuarioDAO;
+import clases.*;
+import dao.*;
 
 public class CuentaService {
 
@@ -35,18 +29,21 @@ public class CuentaService {
     public void createAccount() {
         try {
             int usuarioId = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID del usuario"));
-            String tipo = JOptionPane.showInputDialog("Ingrese tipo de cuenta");
+            String tipo = JOptionPane.showInputDialog("Ingrese tipo de cuenta (Ahorro/Corriente)");
             double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese saldo inicial"));
 
-            Cuenta cuenta = new Cuenta();
-            cuenta.setUsuarioId(usuarioId);
-            cuenta.setTipo(tipo);
-            cuenta.setSaldo(saldo);
-            cuenta.setTasaInteres(20.0);
+            Cuenta cuenta;
+            if ("Ahorro".equalsIgnoreCase(tipo)) {
+                cuenta = new CuentaAhorro(0, usuarioId, saldo);
+                ((CuentaAhorro) cuenta).setTasaInteres(20.0);
+            } else if ("Corriente".equalsIgnoreCase(tipo)) {
+                cuenta = new CuentaCorriente(0, usuarioId, saldo, 1000.0);
+            } else {
+                JOptionPane.showMessageDialog(null, "Tipo de cuenta no válido");
+                return;
+            }
 
-            // Usa la instancia existente de cuentaDAO
             cuentaDAO.crearCuenta(cuenta);
-
             JOptionPane.showMessageDialog(null, "Cuenta creada con éxito!");
 
         } catch (SQLException e) {
@@ -56,19 +53,23 @@ public class CuentaService {
 
     public void listAccounts(StringBuilder sb) {
         try {
-            // Usa la instancia existente de cuentaDAO
             List<Cuenta> cuentas = cuentaDAO.listarCuentas();
-            UsuarioDAO usuarioDAO = new UsuarioDAO();  // UsuarioDAO también obtiene la conexión desde DatabaseConnection
+            UsuarioDAO usuarioDAO = new UsuarioDAO();
 
             for (Cuenta cuenta : cuentas) {
                 Usuario usuario = usuarioDAO.obtenerUsuarioPorId(cuenta.getUsuarioId());
 
                 sb.append("Cuenta ID: ").append(cuenta.getId())
-                        .append(", Tipo: ").append(cuenta.getTipo())
-                        .append(", Saldo: ").append(cuenta.getSaldo())
-                        .append(", Tasa de Interes: ").append(cuenta.getTasaInteres())
-                        .append(", Usuario: ");
+                        .append(", Tipo: ").append(cuenta instanceof CuentaCorriente ? "Corriente" : "Ahorro")
+                        .append(", Saldo: ").append(cuenta.getSaldo());
 
+                if (cuenta instanceof CuentaAhorro) {
+                    sb.append(", Tasa de Interés: ").append(((CuentaAhorro) cuenta).getTasaInteres());
+                } else if (cuenta instanceof CuentaCorriente) {
+                    sb.append(", Límite de Sobregiro: ").append(((CuentaCorriente) cuenta).getLimiteSobregiro());
+                }
+
+                sb.append(", Usuario: ");
                 if (usuario != null) {
                     sb.append(usuario.getNombre());
                 } else {
@@ -86,15 +87,21 @@ public class CuentaService {
     public void updateAccount() {
         try {
             int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la cuenta a actualizar"));
-            String tipo = JOptionPane.showInputDialog("Ingrese nuevo tipo de cuenta");
+            String tipo = JOptionPane.showInputDialog("Ingrese nuevo tipo de cuenta (Ahorro/Corriente)");
             double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese nuevo saldo"));
 
-            Cuenta cuenta = new Cuenta();
-            cuenta.setId(id);
-            cuenta.setTipo(tipo);
-            cuenta.setSaldo(saldo);
-            cuentaDAO.actualizarCuenta(cuenta);
+            Cuenta cuenta;
+            if ("Ahorro".equalsIgnoreCase(tipo)) {
+                cuenta = new CuentaAhorro(id, 0, saldo);
+                ((CuentaAhorro) cuenta).setTasaInteres(20.0);
+            } else if ("Corriente".equalsIgnoreCase(tipo)) {
+                cuenta = new CuentaCorriente(id, 0, saldo, 1000.0);
+            } else {
+                JOptionPane.showMessageDialog(null, "Tipo de cuenta no válido");
+                return;
+            }
 
+            cuentaDAO.actualizarCuenta(cuenta);
             JOptionPane.showMessageDialog(null, "Cuenta actualizada con éxito!");
 
         } catch (SQLException e) {
@@ -106,9 +113,7 @@ public class CuentaService {
         try {
             int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la cuenta a eliminar"));
 
-            // Usa la instancia existente de cuentaDAO
             cuentaDAO.eliminarCuenta(id);
-
             JOptionPane.showMessageDialog(null, "Cuenta eliminada con éxito!");
 
         } catch (SQLException e) {
@@ -117,7 +122,6 @@ public class CuentaService {
     }
 
     public List<String> listarCuentasPorUsuarioId1(int usuarioId) {
-        // TODO: Implementa este método si es necesario
         return null;
     }
 
@@ -125,10 +129,12 @@ public class CuentaService {
         try {
             List<Cuenta> cuentas = cuentaDAO.listarCuentas();
             for (Cuenta cuenta : cuentas) {
-                double interes = cuenta.getSaldo() * (cuenta.getTasaInteres() / 100);
-                cuenta.setSaldo(cuenta.getSaldo() + interes);
-                cuentaDAO.actualizarCuenta(cuenta);
-                cuentaDAO.registrarMovimiento(cuenta.getId(), cuenta.getUsuarioId(), interes, "Cuenta");
+                if (cuenta instanceof CuentaAhorro) {
+                    double interes = cuenta.getSaldo() * (((CuentaAhorro) cuenta).getTasaInteres() / 100);
+                    cuenta.setSaldo(cuenta.getSaldo() + interes);
+                    cuentaDAO.actualizarCuenta(cuenta);
+                    cuentaDAO.registrarMovimiento(cuenta.getId(), cuenta.getUsuarioId(), interes, "Cuenta");
+                }
             }
             JOptionPane.showMessageDialog(null, "Intereses aplicados a todas las cuentas.");
         } catch (SQLException e) {

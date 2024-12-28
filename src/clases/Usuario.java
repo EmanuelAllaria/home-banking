@@ -1,7 +1,5 @@
 package clases;
 
-
-
 import java.util.List;
 
 public class Usuario {
@@ -10,8 +8,6 @@ public class Usuario {
     private double saldo;
     private List<Cuenta> cuentas;
     private List<Tarjeta> tarjetas;
-
-    public Usuario() {}
 
     public Usuario(int id, String nombre, double saldo) {
         this.id = id;

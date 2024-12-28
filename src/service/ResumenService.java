@@ -11,39 +11,47 @@ public class ResumenService {
     private ResumenDAO resumenDAO;
 
     public ResumenService() {
-        // Inicializa ResumenDAO, que obtiene la conexión desde DatabaseConnection
         this.resumenDAO = new ResumenDAO();
     }
 
-    public void listResumenes(StringBuilder sb) {
+    public void listarResumenes(StringBuilder sb) {
         try {
             List<Resumen> resumenes = resumenDAO.listarResumenes();
-            for (Resumen resumen : resumenes) {
-                sb.append("Transferencia a cuenta ID: ").append(resumen.getIdDestino())
-                        .append(", por: $").append(resumen.getMonto())
-                        .append(", de la cuenta ID: ").append(resumen.getIdOrigen())
-                        .append("\n");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void getResumenByCuenta(int cuentaId, StringBuilder sb) {
-        try {
-            List<Resumen> resumenes = resumenDAO.obtenerResumenPorCuentaId(cuentaId);
             if (resumenes.isEmpty()) {
-                sb.append("No hay resúmenes disponibles para la cuenta ID: ").append(cuentaId);
+                sb.append("No hay resúmenes disponibles.\n");
             } else {
                 for (Resumen resumen : resumenes) {
-                    sb.append("Transferencia a cuenta ID: ").append(resumen.getIdDestino())
-                            .append(", por: $").append(resumen.getMonto())
-                            .append(", de la cuenta ID: ").append(resumen.getIdOrigen())
-                            .append("\n");
+                    sb.append(formatearResumen(resumen));
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            manejarExcepcion(e);
         }
+    }
+
+    public void obtenerResumenPorCuenta(int cuentaId, StringBuilder sb) {
+        try {
+            List<Resumen> resumenes = resumenDAO.obtenerResumenPorCuentaId(cuentaId);
+            if (resumenes.isEmpty()) {
+                sb.append("No hay resúmenes disponibles para la cuenta ID: ").append(cuentaId).append("\n");
+            } else {
+                for (Resumen resumen : resumenes) {
+                    sb.append(formatearResumen(resumen));
+                }
+            }
+        } catch (SQLException e) {
+            manejarExcepcion(e);
+        }
+    }
+
+    private String formatearResumen(Resumen resumen) {
+        return "Transferencia a cuenta ID: " + resumen.getIdDestino() +
+                ", por: $" + resumen.getMonto() +
+                ", de la cuenta ID: " + resumen.getIdOrigen() + "\n";
+    }
+
+    private void manejarExcepcion(Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(null, "Ocurrió un error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
 }

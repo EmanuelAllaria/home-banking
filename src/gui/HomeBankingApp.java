@@ -1,6 +1,5 @@
 package gui;
 
-
 import dao.DatabaseConnection;
 import org.h2.tools.Server;
 import service.CuentaService;
@@ -10,6 +9,9 @@ import service.TransferenciaService;
 import service.UsuarioService;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
@@ -27,6 +29,9 @@ public class HomeBankingApp {
 
     public static void main(String[] args) {
         try {
+            // Cambia el aspecto visual a Nimbus para un diseño moderno
+            UIManager.setLookAndFeel(new NimbusLookAndFeel());
+
             // Inicia el servidor de H2 y la conexión a la base de datos
             server = Server.createTcpServer().start();
             Connection connection = DatabaseConnection.getInstance().getConnection();
@@ -40,15 +45,18 @@ public class HomeBankingApp {
 
             createTables(connection);  // Asegúrate de que las tablas existen
 
-            JFrame loginFrame = new JFrame("Login");
-            loginFrame.setSize(300, 200);
+            JFrame loginFrame = new JFrame("HomeBanking - Login");
+            loginFrame.setSize(400, 250);
             loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            loginFrame.setLocationRelativeTo(null); // Centra la ventana
             JPanel loginPanel = new JPanel();
+            loginPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+            loginPanel.setLayout(new GridLayout(4, 1, 10, 10)); // Diseño más limpio
             loginFrame.add(loginPanel);
             placeLoginComponents(loginPanel, loginFrame);
             loginFrame.setVisible(true);
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -56,35 +64,39 @@ public class HomeBankingApp {
     private static void createTables(Connection connection) throws SQLException {
         Statement stmt = connection.createStatement();
         stmt.execute("CREATE TABLE IF NOT EXISTS Usuarios (ID INT PRIMARY KEY AUTO_INCREMENT, Nombre VARCHAR(255), Saldo DOUBLE)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS Cuentas (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT, Tipo VARCHAR(255), Saldo DOUBLE, TasaInteres DOUBLE DEFAULT 20.0)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS Tarjetas (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT, Numero VARCHAR(255), Limite DOUBLE, Saldo DOUBLE, SaldoAPagar DOUBLE, Tipo VARCHAR(255), TasaInteres DOUBLE)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS Transferencias (ID INT PRIMARY KEY AUTO_INCREMENT, IdOrigen INT, IdDestino INT, Monto DOUBLE)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS MovimientosTarjeta (ID INT PRIMARY KEY AUTO_INCREMENT, TarjetaID INT NOT NULL, Monto DOUBLE NOT NULL, Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS MovimientosCuenta (ID INT PRIMARY KEY AUTO_INCREMENT, CuentaID INT NOT NULL, Tipo ENUM('Transferencia', 'Tarjeta', 'Cuenta') NOT NULL, Monto DOUBLE NOT NULL, Detalle VARCHAR(500), Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS AuditLogs (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT, Action VARCHAR(50), Details VARCHAR(255), Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS Cuentas (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT NOT NULL, Tipo VARCHAR(255), Saldo DOUBLE, TasaInteres DOUBLE DEFAULT 20.0, FOREIGN KEY (UsuarioID) REFERENCES Usuarios(ID) ON DELETE CASCADE)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS Tarjetas (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT NOT NULL, Numero VARCHAR(255), Limite DOUBLE, Saldo DOUBLE, SaldoAPagar DOUBLE, Tipo VARCHAR(255), TasaInteres DOUBLE, FOREIGN KEY (UsuarioID) REFERENCES Usuarios(ID) ON DELETE CASCADE)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS Transferencias (ID INT PRIMARY KEY AUTO_INCREMENT, IdOrigen INT NOT NULL, IdDestino INT NOT NULL, Monto DOUBLE, FOREIGN KEY (IdOrigen) REFERENCES Cuentas(ID) ON DELETE CASCADE, FOREIGN KEY (IdDestino) REFERENCES Cuentas(ID) ON DELETE CASCADE)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS MovimientosTarjeta (ID INT PRIMARY KEY AUTO_INCREMENT, TarjetaID INT NOT NULL, Monto DOUBLE NOT NULL, Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (TarjetaID) REFERENCES Tarjetas(ID) ON DELETE CASCADE)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS MovimientosCuenta (ID INT PRIMARY KEY AUTO_INCREMENT, CuentaID INT NOT NULL, Tipo ENUM('Transferencia', 'Tarjeta', 'Cuenta') NOT NULL, Monto DOUBLE NOT NULL, Detalle VARCHAR(500), Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (CuentaID) REFERENCES Cuentas(ID) ON DELETE CASCADE)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS AuditLogs (ID INT PRIMARY KEY AUTO_INCREMENT, UsuarioID INT, Action VARCHAR(50), Details VARCHAR(255), Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (UsuarioID) REFERENCES Usuarios(ID) ON DELETE SET NULL)");
     }
 
     private static void placeLoginComponents(JPanel panel, JFrame loginFrame) {
-        panel.setLayout(null);
+        JLabel titleLabel = new JLabel("Bienvenido a HomeBanking", JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        panel.add(titleLabel);
 
-        JLabel userLabel = new JLabel("Usuario");
-        userLabel.setBounds(10, 20, 80, 25);
-        panel.add(userLabel);
-
+        JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel userLabel = new JLabel("Usuario:");
+        userLabel.setPreferredSize(new Dimension(100, 25));
         JTextField userText = new JTextField(20);
-        userText.setBounds(100, 20, 165, 25);
-        panel.add(userText);
+        userPanel.add(userLabel);
+        userPanel.add(userText);
+        panel.add(userPanel);
 
-        JLabel passwordLabel = new JLabel("Contraseña");
-        passwordLabel.setBounds(10, 50, 80, 25);
-        panel.add(passwordLabel);
-
+        JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel passwordLabel = new JLabel("Contraseña:");
+        passwordLabel.setPreferredSize(new Dimension(100, 25));
         JPasswordField passwordText = new JPasswordField(20);
-        passwordText.setBounds(100, 50, 165, 25);
-        panel.add(passwordText);
+        passwordPanel.add(passwordLabel);
+        passwordPanel.add(passwordText);
+        panel.add(passwordPanel);
 
         JButton loginButton = new JButton("Ingresar");
-        loginButton.setBounds(10, 80, 150, 25);
+        loginButton.setFont(new Font("Arial", Font.BOLD, 14));
+        loginButton.setBackground(new Color(0, 153, 51));
+        loginButton.setForeground(Color.WHITE);
         panel.add(loginButton);
 
         loginButton.addActionListener(new ActionListener() {
@@ -103,17 +115,19 @@ public class HomeBankingApp {
     }
 
     private static void showMainFrame() {
-        JFrame mainFrame = new JFrame("Home Banking");
-        mainFrame.setSize(800, 600);
+        JFrame mainFrame = new JFrame("HomeBanking");
+        mainFrame.setSize(1000, 700);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setLocationRelativeTo(null);
 
         JDesktopPane desktopPane = new JDesktopPane();
+        desktopPane.setBackground(new Color(240, 248, 255)); // Color de fondo
         mainFrame.add(desktopPane);
 
         JMenuBar menuBar = new JMenuBar();
 
         JMenu mainMenu = new JMenu("Opciones");
-
+        mainMenu.setFont(new Font("Arial", Font.BOLD, 16));
 
         JMenuItem userManagementItem = new JMenuItem("Gestión de Usuarios");
         JMenuItem accountManagementItem = new JMenuItem("Gestión de Cuentas");
@@ -121,11 +135,16 @@ public class HomeBankingApp {
         JMenuItem transferItem = new JMenuItem("Transferencias");
         JMenuItem resumenItem = new JMenuItem("Gestión de Resúmenes");
 
+        userManagementItem.setFont(new Font("Arial", Font.PLAIN, 14));
+        accountManagementItem.setFont(new Font("Arial", Font.PLAIN, 14));
+        cardManagementItem.setFont(new Font("Arial", Font.PLAIN, 14));
+        transferItem.setFont(new Font("Arial", Font.PLAIN, 14));
+        resumenItem.setFont(new Font("Arial", Font.PLAIN, 14));
 
         userManagementItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JInternalFrame gestionUsuariosFrame = new JInternalFrame("Gestión de Usuarios", true, true, true, true);
-                gestionUsuariosFrame.setSize(350, 300);
+                gestionUsuariosFrame.setSize(600, 400);
                 desktopPane.add(gestionUsuariosFrame);
                 gestionUsuariosFrame.setVisible(true);
                 UsuarioGUI.placeGestionUsuariosComponents(gestionUsuariosFrame);
@@ -135,7 +154,7 @@ public class HomeBankingApp {
         accountManagementItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JInternalFrame gestionCuentasFrame = new JInternalFrame("Gestión de Cuentas", true, true, true, true);
-                gestionCuentasFrame.setSize(350, 300);
+                gestionCuentasFrame.setSize(600, 400);
                 desktopPane.add(gestionCuentasFrame);
                 gestionCuentasFrame.setVisible(true);
                 CuentaGUI.placeGestionCuentasComponents(gestionCuentasFrame);
@@ -145,7 +164,7 @@ public class HomeBankingApp {
         cardManagementItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JInternalFrame gestionTarjetasFrame = new JInternalFrame("Gestión de Tarjetas", true, true, true, true);
-                gestionTarjetasFrame.setSize(350, 300);
+                gestionTarjetasFrame.setSize(600, 400);
                 desktopPane.add(gestionTarjetasFrame);
                 gestionTarjetasFrame.setVisible(true);
                 TarjetaGUI.placeGestionTarjetasComponents(gestionTarjetasFrame);
@@ -155,7 +174,7 @@ public class HomeBankingApp {
         transferItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JInternalFrame transferenciasFrame = new JInternalFrame("Transferencias", true, true, true, true);
-                transferenciasFrame.setSize(350, 300);
+                transferenciasFrame.setSize(600, 400);
                 desktopPane.add(transferenciasFrame);
                 transferenciasFrame.setVisible(true);
                 TransferenciaGUI.placeTransferenciasComponents(transferenciasFrame);
@@ -165,54 +184,22 @@ public class HomeBankingApp {
         resumenItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JInternalFrame gestionResumenFrame = new JInternalFrame("Gestión de Resúmenes", true, true, true, true);
-                gestionResumenFrame.setSize(350, 300);
+                gestionResumenFrame.setSize(600, 400);
                 desktopPane.add(gestionResumenFrame);
                 gestionResumenFrame.setVisible(true);
                 ResumenGUI.placeGestionResumenComponents(gestionResumenFrame);
             }
         });
 
-        // Add menu items to the menu
         mainMenu.add(userManagementItem);
         mainMenu.add(accountManagementItem);
         mainMenu.add(cardManagementItem);
         mainMenu.add(transferItem);
         mainMenu.add(resumenItem);
 
-        // Add the main menu to the menu bar
         menuBar.add(mainMenu);
-
-        // Set the menu bar for the JFrame
         mainFrame.setJMenuBar(menuBar);
 
-        mainFrame.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                try {
-                    Connection connection = DatabaseConnection.getInstance().getConnection();
-                    if (connection != null && !connection.isClosed()) {
-                        connection.close();
-                    }
-                    if (server != null) {
-                        server.stop();
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
         mainFrame.setVisible(true);
-    }
-
-    private static void openWindow(String title) {
-        JFrame window = new JFrame(title);
-        window.setSize(300, 200);
-        window.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-        JLabel label = new JLabel("Bienvenido a " + title, SwingConstants.CENTER);
-        window.add(label);
-
-        window.setVisible(true);
     }
 }
