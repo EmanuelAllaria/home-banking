@@ -1,6 +1,7 @@
 package gui;
 
 import javax.swing.*;
+
 import service.UsuarioService;
 
 import java.awt.*;
@@ -36,14 +37,7 @@ public class UsuarioGUI {
         panel.add(listUsersButton, gbc);
 
         listUsersButton.addActionListener(e -> {
-            List<String> listUser = usuarioService.listUsers();
-            StringBuilder sb = new StringBuilder();
-            if (listUser != null && !listUser.isEmpty()) {
-                listUser.forEach(usuario -> sb.append(usuario).append("\n"));
-                userDetailsTextArea.setText(sb.toString());
-            } else {
-                JOptionPane.showMessageDialog(panel, "No hay usuarios registrados.", "Información", JOptionPane.INFORMATION_MESSAGE);
-            }
+            usuarioService.listUsers();
         });
 
         // Botón Actualizar Usuario

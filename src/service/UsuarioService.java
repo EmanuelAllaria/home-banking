@@ -1,8 +1,10 @@
 package service;
 
 import javax.swing.*;
+
 import clases.Usuario;
 import dao.UsuarioDAO;
+
 import java.sql.SQLException;
 import java.util.List;
 
@@ -34,7 +36,11 @@ public class UsuarioService {
                         .append(", Saldo: ").append(usuario.getSaldo())
                         .append("\n");
             }
-            JOptionPane.showMessageDialog(null, sb.toString(), "Usuarios", JOptionPane.INFORMATION_MESSAGE);
+            if (!usuarios.isEmpty()) {
+                JOptionPane.showMessageDialog(null, sb.toString(), "Usuarios", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null, "No hay usuarios registrados.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error al listar usuarios: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
