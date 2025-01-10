@@ -116,8 +116,6 @@ public class TarjetaGUI {
         gbc.weighty = 1.0;
         panel.add(scrollPane, gbc);
 
-        // Cargar la lista de tarjetas al iniciar
-        updateCardList();
     }
 
     // Método para actualizar la lista de tarjetas en el JTextArea

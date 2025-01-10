@@ -114,7 +114,6 @@ public class CuentaService {
             int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la cuenta a eliminar"));
 
             cuentaDAO.eliminarCuenta(id);
-            JOptionPane.showMessageDialog(null, "Cuenta eliminada con éxito!");
 
         } catch (SQLException e) {
             e.printStackTrace();

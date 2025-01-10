@@ -1,11 +1,13 @@
 package clases;
 
+import javax.swing.*;
+
 public class TarjetaCredito extends Tarjeta {
     private double tasaInteres;
     private double saldoAPagar;
 
-    public TarjetaCredito(int id, int usuarioId, String numero, double limite, double saldo, double saldoAPagar, double tasaInteres) {
-        super(id, usuarioId, numero, limite, saldo);
+    public TarjetaCredito(int id, int cuentaId, String numero, double limite, double saldo, double saldoAPagar, double tasaInteres) {
+        super(id, cuentaId, numero, limite, saldo);
         this.saldoAPagar = saldoAPagar;
         this.tasaInteres = tasaInteres;
     }
@@ -15,6 +17,7 @@ public class TarjetaCredito extends Tarjeta {
         if (saldo + monto <= limite) {
             saldo += monto;
         } else {
+            JOptionPane.showMessageDialog(null, "Límite excedido.");
             System.out.println("Límite excedido.");
         }
     }

@@ -27,7 +27,7 @@ public class TransferenciaService {
         double saldoDestinoAntes = cuentaDestino.getSaldo();
 
         // Actualización de saldos
-        cuentaOrigen.setSaldo(saldoOrigenAntes - transferencia.getMonto());
+        cuentaOrigen.retirar(transferencia.getMonto());
         cuentaDestino.setSaldo(saldoDestinoAntes + transferencia.getMonto());
 
         // Persistencia en base de datos

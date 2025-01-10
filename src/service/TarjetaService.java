@@ -1,8 +1,6 @@
 package service;
 
 
-import javax.swing.*;
-
 import clases.*;
 import dao.CuentaDAO;
 import dao.DatabaseConnection;
@@ -13,10 +11,8 @@ import java.sql.*;
 import java.util.List;
 
 import java.sql.SQLException;
-import java.util.List;
 import javax.swing.JOptionPane;
 import java.sql.Connection;
-import java.util.Map;
 import java.util.Objects;
 
 public class TarjetaService {
@@ -29,7 +25,7 @@ public class TarjetaService {
 
     public void createCard() {
         try {
-            int usuarioId = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID del usuario"));
+            int cuentaID = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la cuenta"));
             String numero = JOptionPane.showInputDialog("Ingrese número de tarjeta");
             double limite = Double.parseDouble(JOptionPane.showInputDialog("Ingrese límite"));
             double saldo = Double.parseDouble(JOptionPane.showInputDialog("Ingrese saldo"));
@@ -39,13 +35,13 @@ public class TarjetaService {
             switch (tipoTarjeta) {
                 case "Credito":
                     double tasaInteres = Double.parseDouble(JOptionPane.showInputDialog("Ingrese tasa de interés"));
-                    tarjeta = new TarjetaCredito(0, usuarioId, numero, limite, saldo, 0.0, tasaInteres);
+                    tarjeta = new TarjetaCredito(0, cuentaID, numero, limite, saldo, 0.0, tasaInteres);
                     break;
                 case "Debito":
-                    tarjeta = new TarjetaDebito(0, usuarioId, numero, limite, saldo);
+                    tarjeta = new TarjetaDebito(0, cuentaID, numero, limite, saldo);
                     break;
                 case "Prepaga":
-                    tarjeta = new TarjetaPrepaga(0, usuarioId, numero, limite, saldo);
+                    tarjeta = new TarjetaPrepaga(0, cuentaID, numero, limite, saldo);
                     break;
                 default:
                     throw new IllegalArgumentException("Tipo de tarjeta no válido");
@@ -57,6 +53,7 @@ public class TarjetaService {
             JOptionPane.showMessageDialog(null, "Tarjeta creada con éxito!");
 
         } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al crear la Tarjeta!");
             e.printStackTrace();
         }
     }
@@ -101,11 +98,13 @@ public class TarjetaService {
             int id = Integer.parseInt(JOptionPane.showInputDialog("Ingrese ID de la tarjeta a eliminar"));
 
             TarjetaDAO tarjetaDAO = new TarjetaDAO();
+
             tarjetaDAO.eliminarTarjeta(id);
 
             JOptionPane.showMessageDialog(null, "Tarjeta eliminada con éxito!");
 
         } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "No se pudo eliminar la tarjeta!");
             e.printStackTrace();
         }
     }
@@ -114,12 +113,14 @@ public class TarjetaService {
         try {
             TarjetaDAO tarjetaDAO = new TarjetaDAO();
             UsuarioDAO usuarioDAO = new UsuarioDAO();
+            CuentaDAO cuentaDAO = new CuentaDAO();
 
             List<Tarjeta> tarjetas = tarjetaDAO.listarTarjetas();
             StringBuilder sb = new StringBuilder();
 
             for (Tarjeta tarjeta : tarjetas) {
-                Usuario usuario = usuarioDAO.obtenerUsuarioPorId(tarjeta.getUsuarioId());
+                Cuenta cuenta = cuentaDAO.obtenerCuentaPorId(tarjeta.getCuentaId());
+                Usuario usuario = UsuarioDAO.obtenerUsuarioPorId(cuenta.getUsuarioId());
                 sb.append("Tarjeta ID: ").append(tarjeta.getId())
                         .append(", Número: ").append(tarjeta.getNumero())
                         .append(", Límite: ").append(tarjeta.getLimite())
@@ -151,6 +152,7 @@ public class TarjetaService {
 
             if (tarjeta != null) {
                 double saldoActual = tarjeta.getSaldo();
+                tarjeta.realizarPago(monto);
                 double nuevoSaldo = saldoActual - monto;
                 tarjetaDAO.actualizarSaldo(tarjetaId, nuevoSaldo);
                 if (Objects.equals(tarjeta.getTipo(), "TarjetaCredito")) {
@@ -158,7 +160,7 @@ public class TarjetaService {
                 }
                 tarjetaDAO.registrarMovimiento(tarjetaId, monto);
                 registrarMovimiento(tarjetaId, monto);
-                JOptionPane.showMessageDialog(null, "Débito registrado con éxito","Debitos", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Débito registrado con éxito", "Debitos", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(null, "Tarjeta no encontrada");
             }

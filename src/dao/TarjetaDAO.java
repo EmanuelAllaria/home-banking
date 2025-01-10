@@ -51,9 +51,20 @@ public class TarjetaDAO {
         return null;
     }
 
+    public Tarjeta obtenerTarjetaPorCuentaId(int cuentaId) throws SQLException {
+        String sql = "SELECT * FROM Tarjetas WHERE CuentaId = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, cuentaId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return crearTarjetaDesdeResultSet(rs);
+            }
+        }
+        return null;
+    }
+
     public void crearTarjeta(Tarjeta tarjeta) throws SQLException {
         String sql = """
-            INSERT INTO Tarjetas (UsuarioID, Numero, Limite, Saldo, Tipo, TasaInteres, SaldoAPagar)
+            INSERT INTO Tarjetas (CuentaId, Numero, Limite, Saldo, Tipo, TasaInteres, SaldoAPagar)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -104,20 +115,20 @@ public class TarjetaDAO {
         String tipo = rs.getString("Tipo");
         if ("TarjetaCredito".equals(tipo)) {
             return new TarjetaCredito(
-                    rs.getInt("ID"), rs.getInt("UsuarioID"),
+                    rs.getInt("ID"), rs.getInt("CuentaId"),
                     rs.getString("Numero"), rs.getDouble("Limite"),
                     rs.getDouble("Saldo"), rs.getDouble("SaldoAPagar"),
                     rs.getDouble("TasaInteres")
             );
         } else if ("TarjetaDebito".equals(tipo)) {
             return new TarjetaDebito(
-                    rs.getInt("ID"), rs.getInt("UsuarioID"),
+                    rs.getInt("ID"), rs.getInt("CuentaId"),
                     rs.getString("Numero"), rs.getDouble("Limite"),
                     rs.getDouble("Saldo")
             );
         } else if ("TarjetaPrepaga".equals(tipo)) {
             return new TarjetaPrepaga(
-                    rs.getInt("ID"), rs.getInt("UsuarioID"),
+                    rs.getInt("ID"), rs.getInt("CuentaId"),
                     rs.getString("Numero"), rs.getDouble("Limite"),
                     rs.getDouble("Saldo")
             );
@@ -126,17 +137,16 @@ public class TarjetaDAO {
     }
 
     private void prepararParametrosTarjeta(PreparedStatement pstmt, Tarjeta tarjeta) throws SQLException {
-        pstmt.setInt(1, tarjeta.getUsuarioId());
-        pstmt.setString(2, tarjeta.getNumero());
-        pstmt.setDouble(3, tarjeta.getLimite());
-        pstmt.setDouble(4, tarjeta.getSaldo());
-        pstmt.setString(5, tarjeta.getClass().getSimpleName());
+        pstmt.setString(1, tarjeta.getNumero());
+        pstmt.setDouble(2, tarjeta.getLimite());
+        pstmt.setDouble(3, tarjeta.getSaldo());
+        pstmt.setString(4, tarjeta.getClass().getSimpleName());
         if (tarjeta instanceof TarjetaCredito) {
-            pstmt.setDouble(6, ((TarjetaCredito) tarjeta).getTasaInteres());
-            pstmt.setDouble(7, ((TarjetaCredito) tarjeta).getSaldoAPagar());
+            pstmt.setDouble(5, ((TarjetaCredito) tarjeta).getTasaInteres());
+            pstmt.setDouble(6, ((TarjetaCredito) tarjeta).getSaldoAPagar());
         } else {
+            pstmt.setNull(5, Types.DOUBLE);
             pstmt.setNull(6, Types.DOUBLE);
-            pstmt.setNull(7, Types.DOUBLE);
         }
     }
 

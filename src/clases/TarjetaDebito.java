@@ -1,8 +1,10 @@
 package clases;
 
+import javax.swing.*;
+
 public class TarjetaDebito extends Tarjeta {
-    public TarjetaDebito(int id, int usuarioId, String numero, double limite, double saldo) {
-        super(id, usuarioId, numero, limite, saldo);
+    public TarjetaDebito(int id, int cuentaId, String numero, double limite, double saldo) {
+        super(id, cuentaId, numero, limite, saldo);
     }
 
     @Override
@@ -10,6 +12,7 @@ public class TarjetaDebito extends Tarjeta {
         if (saldo >= monto) {
             saldo -= monto;
         } else {
+            JOptionPane.showMessageDialog(null, "Fondos insuficientes.");
             System.out.println("Fondos insuficientes.");
         }
     }

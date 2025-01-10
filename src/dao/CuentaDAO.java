@@ -4,11 +4,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import clases.Cuenta;
-import clases.MovimientoCuenta;
-import clases.CuentaAhorro;
-import clases.CuentaCorriente;
-import clases.Usuario;
+import clases.*;
+
+import javax.swing.*;
 
 public class CuentaDAO {
     private Connection connection;
@@ -51,13 +49,19 @@ public class CuentaDAO {
 
     public void eliminarCuenta(int id) throws SQLException {
         Usuario usuario = UsuarioDAO.obtenerUsuarioPorCuentaId(id);
-
+        TarjetaDAO tarjetaDAO = new TarjetaDAO();
+        Tarjeta tarjeta = tarjetaDAO.obtenerTarjetaPorCuentaId(id);
+        if (tarjeta != null) {
+            JOptionPane.showMessageDialog(null, "Error al borrar la cuenta, tiene tarjetas asociadas", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         String sql = "DELETE FROM Cuentas WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
 
             UsuarioDAO.logAudit(usuario.getId(), "CUENTA ELIMINADA", "Cuenta eliminada.");
+            JOptionPane.showMessageDialog(null, "Cuenta eliminada con éxito!");
         }
     }
 
@@ -233,10 +237,10 @@ public class CuentaDAO {
 
     public List<Cuenta> listarCuentasPorTarjetaId(int tarjetaId) throws SQLException {
         String sql = """
-            SELECT c.* FROM Cuentas c
-            JOIN Tarjetas t ON c.UsuarioID = t.UsuarioID
-            WHERE t.ID = ?
-        """;
+                    SELECT c.* FROM Cuentas c
+                    JOIN Tarjetas t ON c.ID = t.CuentaID
+                    WHERE t.ID = ?
+                """;
         List<Cuenta> cuentas = new ArrayList<>();
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, tarjetaId);
